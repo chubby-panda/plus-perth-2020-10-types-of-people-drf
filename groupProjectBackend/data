@@ -1,0 +1,21 @@
+
+{
+"event_name": "Project one",
+"event_description": "The first project.",
+"event_image": "https://via.placeholder.com/300.jpg",
+"is_open": true,
+"event_date": "2020-09-03T03:38:54.684327Z",
+"date_created": "2020-09-02T05:44:48.925243Z",
+"event_location": "Perth",
+"organiser": "Samara",
+"category": "Python"
+}
+
+
+{
+    "id": 1,
+    "username": "test1",
+    "email": "test@test.com",
+    "is_org": false,
+    "password": "THisNewHALP12@#%!",
+}
