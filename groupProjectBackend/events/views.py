@@ -1,10 +1,10 @@
 from django.shortcuts import render
 from django.http import Http404
-from rest_framework import status,permissions, generics
+from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Event, Category
-from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer
+from .models import Event, Category, Register
+from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
 from .permissions import IsOwnerOrReadOnly, isSuperUser
 
 class CategoryList(APIView):
@@ -32,7 +32,7 @@ class CategoryList(APIView):
             )
 
 class EventList(APIView):
-    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request):
         events = Event.objects.all()
@@ -60,7 +60,7 @@ class CategoryProject(generics.RetrieveAPIView):
     lookup_field = 'category'
 
 class EventDetail(APIView):
-    # permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     serializer_class = EventDetailSerializer
 
     def get_object(self, pk):
@@ -103,3 +103,34 @@ class EventDetail(APIView):
             return Response(status = status.HTTP_204_NO_CONTENT)
         except Event.DoesNotExist:
             raise Http404
+
+
+# class Mentors_Register_List(APIView):
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+#     def get(self, request):
+#         events = Event.objects.all()
+#         serializer = EventSerializer(events, many=True)
+#         return Response(serializer.data)
+
+class MentorsRegisterList(APIView):
+    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        registers = Register.objects.all()
+        serializer = RegisterSerializer(registers, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(mentor=request.user)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
