@@ -3,10 +3,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, generics, viewsets
 from .models import CustomUser, MentorProfile, OrgProfile
-from .serializers import CustomUserSerializer, MentorProfileSerializer, OrgProfileSerializer
+from .serializers import CustomUserSerializer, MentorProfileSerializer, OrgProfileSerializer, ChangePasswordSerializer
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from .permissions import IsOwnerOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 
 
 class CustomUserCreate(generics.CreateAPIView):
@@ -18,6 +19,36 @@ class CustomUserCreate(generics.CreateAPIView):
     def check_permissions(self, request):
         if request.user.is_authenticated:
             self.permission_denied(request)
+
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsOwnerOrReadOnly,]
+    queryset = CustomUser.objects.all()
+    serializer_class = ChangePasswordSerializer
+
+    def get_object(self, username):
+        try:
+            user = CustomUser.objects.get(username=username)
+            self.check_object_permissions(self.request, user)
+            return user
+        except CustomUser.DoesNotExist:
+            raise Http404
+
+    def put(self, request, username):
+        user = self.get_object(username)
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            # set_password also hashes the password that the user will get
+            user.set_password(serializer.data.get("new_password"))
+            user.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_201_CREATED,
+                'message': 'Password updated successfully',
+                'data': []
+            }
+            return Response(response)
 
 class CustomUserList(APIView):
 
@@ -73,7 +104,7 @@ class CustomUserDetail(APIView):
             raise Http404
 
 class MentorProfile(APIView):
-    permission_classes = IsOwnerOrReadOnly
+    permission_classes = [IsOwnerOrReadOnly,]
 
     def get_object(self, username):
         try:
@@ -103,7 +134,7 @@ class MentorProfile(APIView):
         )
 
 class OrgProfile(APIView):
-    permission_classes = IsOwnerOrReadOnly
+    permission_classes = [IsOwnerOrReadOnly,]
 
     def get_object(self, username):
         try:
