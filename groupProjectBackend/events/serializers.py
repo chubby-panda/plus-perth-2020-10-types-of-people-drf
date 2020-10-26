@@ -1,15 +1,17 @@
 from rest_framework import serializers
-from .models import Event, Category
+from .models import Event, Category, Register
 
 class CategorySerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
     category = serializers.CharField(max_length=100)
+    category_icon = serializers.URLField(max_length=120)
     lookup_field = 'category'
         
     def create(self, validated_data):
         return Category.objects.create(**validated_data)
 
 class EventSerializer(serializers.Serializer):
-    event_id = serializers.ReadOnlyField()
+    id = serializers.ReadOnlyField()
     event_name = serializers.CharField(max_length=120)
     event_description = serializers.CharField(max_length=500)
     event_image = serializers.URLField(max_length=120)
@@ -17,10 +19,8 @@ class EventSerializer(serializers.Serializer):
     date_created = serializers.DateTimeField()
     event_date = serializers.DateTimeField()
     event_location = serializers.CharField(max_length=120)
-    # organiser = serializers.CharField(max_length=26)
     organiser = serializers.ReadOnlyField(source='organiser.username')
     category = serializers.SlugRelatedField(queryset = Category.objects.all(), read_only = False, slug_field='category')
-
 
     def create(self, validated_data):
         return Event.objects.create(**validated_data)
@@ -28,8 +28,24 @@ class EventSerializer(serializers.Serializer):
 class CategoryProjectSerializer(CategorySerializer):
     event_categories = EventSerializer(many=True, read_only=True)
 
+class RegisterSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    event_id = serializers.IntegerField()
+    mentor = serializers.ReadOnlyField(source='mentor.username')
+
+    def create(self, validated_data):
+        return Register.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        instance.id = validated_data.get('id', instance.id)
+        instance.mentor = validated_data.get('mentor', instance.mentor)
+        instance.event_id = validated_data.get('event_id', instance.event_id)
+        instance.save()
+        return instance
 
 class EventDetailSerializer(EventSerializer):
+    responses = RegisterSerializer(many=True, read_only=True)
+
     def update(self, instance, validated_data):
         instance.event_name = validated_data.get('event_name', instance.event_name)
         instance.event_description = validated_data.get('event_description', instance.event_description)
@@ -42,3 +58,7 @@ class EventDetailSerializer(EventSerializer):
         instance.category = validated_data.get('category', instance.category)
         instance.save()
         return instance
+
+class MentorCategory(serializers.Serializer):
+    event_id = serializers.IntegerField()
+    mentor = serializers.ReadOnlyField(source='mentor.username')
