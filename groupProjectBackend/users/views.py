@@ -20,35 +20,36 @@ class CustomUserCreate(generics.CreateAPIView):
         if request.user.is_authenticated:
             self.permission_denied(request)
 
-
-
-class ChangePasswordView(APIView):
-    permission_classes = [IsOwnerOrReadOnly,]
-    queryset = CustomUser.objects.all()
+class ChangePasswordView(generics.UpdateAPIView):
     serializer_class = ChangePasswordSerializer
+    model = CustomUser
+    permission_classes = (IsAuthenticated,)
 
-    def get_object(self, username):
-        try:
-            user = CustomUser.objects.get(username=username)
-            self.check_object_permissions(self.request, user)
-            return user
-        except CustomUser.DoesNotExist:
-            raise Http404
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
 
-    def put(self, request, username):
-        user = self.get_object(username)
-        serializer = ChangePasswordSerializer(data=request.data)
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            # Check old password
+
+            if not self.object.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
             # set_password also hashes the password that the user will get
-            user.set_password(serializer.data.get("new_password"))
-            user.save()
+            self.object.set_password(serializer.data.get("new_password"))
+            self.object.save()
             response = {
                 'status': 'success',
-                'code': status.HTTP_201_CREATED,
+                'code': status.HTTP_200_OK,
                 'message': 'Password updated successfully',
                 'data': []
             }
+
             return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomUserList(APIView):
 

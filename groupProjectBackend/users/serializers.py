@@ -21,31 +21,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class ChangePasswordSerializer(serializers.Serializer):
+    model = CustomUser
 
-class ChangePasswordSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
-    password2 = serializers.CharField(write_only=True, required=True)
-    old_password = serializers.CharField(write_only=True, required=True)
-
-    class Meta:
-        model = CustomUser
-        fields = ('old_password', 'password', 'password2')
-
-    def validate(self, data):
-        if not data.get('password') or not data.get('password2'):
-            raise serializers.ValidationError("Please enter a password and "
-                "confirm it.")
-        if data.get('password') != data.get('password2'):
-            raise serializers.ValidationError("Those passwords don't match.")
-        return data
-
-    def update(self, instance, validated_data):
-        instance.set_password(validated_data['password'])
-        instance.save()
-
-        return instance
-
-
+    """
+    Serializer for password change endpoint.
+    """
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
 
 class MentorProfileSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()
