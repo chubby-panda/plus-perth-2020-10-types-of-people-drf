@@ -11,8 +11,8 @@ class CustomUser(AbstractUser):
 
 
 class MentorProfile(models.Model):
-    name = models.CharField(max_length=300, blank=True, null=True)
-    bio = models.CharField(max_length=5000, blank=True, null=True)
+    name = models.CharField(max_length=300, blank=True)
+    bio = models.CharField(max_length=5000, blank=True)
     user = models.OneToOneField(
         CustomUser,
         on_delete=models.CASCADE,
