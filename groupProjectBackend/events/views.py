@@ -9,6 +9,9 @@ from .permissions import IsOwnerOrReadOnly, isSuperUser
 
 
 class CategoryList(APIView):
+    """
+    Returns list of all categories
+    """
     permission_classes = [isSuperUser, permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request):
@@ -33,11 +36,63 @@ class CategoryList(APIView):
         )
 
 
+class CategoryDetail(APIView):
+    """
+    Returns details of specified category
+    """
+    permission_classes = [isSuperUser, ]
+    serializer_class = CategorySerializer
+
+    def get_object(self, category):
+        try:
+            return Category.objects.get(category=category)
+        except Category.DoesNotExist:
+            raise Http404
+
+    def get(self, request, category):
+        category_object = self.get_object(category)
+        serializer = CategorySerializer(category_object)
+        return Response(serializer.data)
+
+    def put(self, request, category):
+        category_object = self.get_object(category)
+        self.check_object_permissions(request, category_object)
+        data = request.data
+        serializer = CategorySerializer(
+            instance=category_object,
+            data=data,
+            partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def delete(self, request, category):
+        category_object = self.get_object(category)
+        self.check_object_permissions(request, category_object)
+
+        try:
+            category_object.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Category.DoesNotExist:
+            raise Http404
+
+
 class EventList(APIView):
+    """
+    Returns list of all open events
+    """
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request):
-        events = Event.objects.all()
+        events = Event.objects.filter(is_open=True)
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
@@ -56,14 +111,22 @@ class EventList(APIView):
         )
 
 
-class CategoryProject(generics.RetrieveAPIView):
-    permission_classes = [isSuperUser]
-    queryset = Category.objects.all()
-    serializer_class = CategoryProjectSerializer
-    lookup_field = 'category'
+class CategoryProjectList(APIView):
+    """
+    Returns list of projects of specified category
+    """
+    # permission_classes = [isSuperUser]
+
+    def get(self, request, category):
+        events = Event.objects.filter(categories__category=category)
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
 
 
 class EventDetail(APIView):
+    """
+    Returns details of specified event
+    """
     permission_classes = [
         permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     serializer_class = EventDetailSerializer
