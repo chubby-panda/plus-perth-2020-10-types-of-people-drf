@@ -115,7 +115,6 @@ class CategoryProjectList(APIView):
     """
     Returns list of projects of specified category
     """
-    # permission_classes = [isSuperUser]
 
     def get(self, request, category):
         events = Event.objects.filter(categories__category=category)
@@ -127,8 +126,7 @@ class EventDetail(APIView):
     """
     Returns details of specified event
     """
-    permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly]
     serializer_class = EventDetailSerializer
 
     def get_object(self, pk):

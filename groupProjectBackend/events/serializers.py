@@ -58,6 +58,13 @@ class EventDetailSerializer(EventSerializer):
     responses = RegisterSerializer(many=True, read_only=True)
 
     def update(self, instance, validated_data):
+        # Get the categories from the input data
+        categories_data = validated_data.pop('categories')
+
+        # Get the current categories
+        categories = instance.categories
+
+        # Update the other fields
         instance.event_name = validated_data.get(
             'event_name', instance.event_name)
         instance.event_description = validated_data.get(
@@ -73,7 +80,13 @@ class EventDetailSerializer(EventSerializer):
             'event_date', instance.event_date)
         instance.event_location = validated_data.get(
             'event_location', instance.event_location)
-        instance.category = validated_data.get('category', instance.category)
+        instance.save()
+
+        # Clear the categories data
+        categories.clear()
+        # Set the categories data
+        categories.set(categories_data)
+
         instance.save()
         return instance
 
