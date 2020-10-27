@@ -21,13 +21,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-
 class ChangePasswordSerializer(serializers.Serializer):
     model = CustomUser
 
+    """
+    Serializer for password change endpoint.
+    """
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
-
 
 class MentorProfileSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()
