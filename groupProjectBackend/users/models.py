@@ -19,6 +19,7 @@ class MentorProfile(models.Model):
         null=True,
         related_name='mentor_profile',
     )
+    skills = models.ManyToManyField(CustomUser,related_name='mentors')
 
     def __str__(self):
         return self.user.username

@@ -42,11 +42,10 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
     bio = serializers.CharField(max_length=5000)
     name = serializers.CharField(max_length=300)
-    # skills = UserSkillsSerializer(many=True)
     
     class Meta:
         model = MentorProfile
-        fields = ['id', 'name', 'user', 'username','bio']
+        fields = ['id', 'name', 'user', 'username','bio', 'skills']
         lookup_field = 'username'
 
     def create(self, validated_data):
