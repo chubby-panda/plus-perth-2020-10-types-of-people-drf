@@ -2,10 +2,54 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, generics, viewsets
-from .models import CustomUser
-from .serializers import CustomUserSerializer
+from .models import CustomUser, MentorProfile, OrgProfile
+from .serializers import CustomUserSerializer, MentorProfileSerializer, OrgProfileSerializer, ChangePasswordSerializer
 from django.shortcuts import get_object_or_404
-from django.core.exceptions import PermissionDenied 
+from django.core.exceptions import PermissionDenied
+from .permissions import IsOwnerOrReadOnly, IsProfileUserOrReadOnly
+from rest_framework.permissions import IsAuthenticated
+
+
+class CustomUserCreate(generics.CreateAPIView):
+    """
+    View for registering new account.
+    """
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    def check_permissions(self, request):
+        if request.user.is_authenticated:
+            self.permission_denied(request)
+
+class ChangePasswordView(generics.UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    model = CustomUser
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            # Check old password
+
+            if not self.object.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+            # set_password also hashes the password that the user will get
+            self.object.set_password(serializer.data.get("new_password"))
+            self.object.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'message': 'Password updated successfully',
+                'data': []
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomUserList(APIView):
 
@@ -13,16 +57,7 @@ class CustomUserList(APIView):
         users = CustomUser.objects.all()
         serializer = CustomUserSerializer(users, many=True)
         return Response(serializer.data)
-    
-    def post(self, request):
-        serializer = CustomUserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response (
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+
 
 class CustomUserDetail(APIView):
     # permission_classes = [permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly]
@@ -52,7 +87,7 @@ class CustomUserDetail(APIView):
             serializer.save()
             return Response(
                 serializer.data, 
-                status = status.HTTP_201_CREATED
+                status = status.HTTP_200_OK
             )
         return Response (
             serializer.errors,
@@ -68,3 +103,67 @@ class CustomUserDetail(APIView):
             return Response(status = status.HTTP_204_NO_CONTENT)
         except CustomUser.DoesNotExist:
             raise Http404
+
+class MentorProfileDetail(APIView):
+    permission_classes = [IsProfileUserOrReadOnly,]
+    serializer_class = MentorProfileSerializer
+
+    def get_object(self, username):
+        try:
+            mentor_profile = MentorProfile.objects.select_related('user').get(user__username=username)
+            self.check_object_permissions(self.request, mentor_profile)
+            return mentor_profile
+        except Exception as e:
+            print(e)
+            raise Http404
+    
+    def get(self, request, username):
+        mentor_profile = self.get_object(username=username)
+        serializer= MentorProfileSerializer(mentor_profile)
+        return Response(serializer.data)
+
+    def put(self, request, username):
+        mentor_profile = self.get_object(username=username)
+        serializer = MentorProfileSerializer(mentor_profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(
+                serializer.data,
+                status.HTTP_200_OK
+            )
+        return Response(
+            serializer.data,
+            status.HTTP_400_BAD_REQUEST
+        )
+
+class OrgProfileDetail(APIView):
+    permission_classes = [IsProfileUserOrReadOnly,]
+    serializer_class = OrgProfileSerializer
+
+    def get_object(self, username):
+        try:
+            org_profile = OrgProfile.objects.select_related('user').get(user__username=username)
+            self.check_object_permissions(self.request, org_profile)
+            return org_profile
+        except Exception as e:
+            print(e)
+            raise Http404
+    
+    def get(self, request, username):
+        org_profile = self.get_object(username=username)
+        serializer= OrgProfileSerializer(org_profile)
+        return Response(serializer.data)
+
+    def put(self, request, username):
+        org_profile = self.get_object(username=username)
+        serializer = OrgProfileSerializer(org_profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(
+                serializer.data,
+                status.HTTP_200_OK
+            )
+        return Response(
+            serializer.data,
+            status.HTTP_400_BAD_REQUEST
+        )
