@@ -40,8 +40,9 @@ class CategoryProjectSerializer(CategorySerializer):
 
 class RegisterSerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
-    event_id = serializers.IntegerField()
+    event = serializers.ReadOnlyField(source='event.id')
     mentor = serializers.ReadOnlyField(source='mentor.username')
+    date_registered = serializers.DateTimeField(read_only=True)
 
     def create(self, validated_data):
         return Register.objects.create(**validated_data)

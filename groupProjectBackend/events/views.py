@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
 from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
-from .permissions import IsOwnerOrReadOnly, isSuperUser
+from .permissions import IsOwnerOrReadOnly, isSuperUser, IsOrganisationOrReadOnly
 
 
 class CategoryList(APIView):
@@ -89,7 +89,7 @@ class EventList(APIView):
     """
     Returns list of all open events
     """
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOrganisationOrReadOnly]
 
     def get(self, request):
         events = Event.objects.filter(is_open=True)
@@ -171,27 +171,28 @@ class EventDetail(APIView):
             raise Http404
 
 
-# class Mentors_Register_List(APIView):
-#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
-
-#     def get(self, request):
-#         events = Event.objects.all()
-#         serializer = EventSerializer(events, many=True)
-#         return Response(serializer.data)
-
 class MentorsRegisterList(APIView):
-    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    """
+    Returns a list of mentors for specified event
+    Posts a mentor register object
+    """
 
-    def get(self, request):
-        registers = Register.objects.all()
-        serializer = RegisterSerializer(registers, many=True)
+    def get_object(self, pk):
+        try:
+            return Event.objects.get(pk=pk)
+        except Event.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        responses = Register.objects.all().filter(event=self.get_object(pk))
+        serializer = RegisterSerializer(responses, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
+    def post(self, request, pk):
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save(mentor=request.user)
+            serializer.save(event=self.get_object(pk), mentor=request.user)
             return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED
