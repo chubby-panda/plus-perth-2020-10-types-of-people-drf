@@ -2,6 +2,7 @@ from rest_framework import serializers
 # from allauth.account.util import setup_user_email
 # from rest_auth.registration.serializers import RegisterSerializer
 from .models import CustomUser, OrgProfile, MentorProfile
+from events.models import Category
 
 class CustomUserSerializer(serializers.ModelSerializer):
 
@@ -30,6 +31,11 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
+class UserSkillsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = "__all__"
+
 class MentorProfileSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()
     username = serializers.ReadOnlyField(source='user.usermame')
@@ -39,7 +45,7 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = MentorProfile
-        fields = ['id', 'name', 'user', 'username','bio']
+        fields = ['id', 'name', 'user', 'username','bio', 'skills']
         lookup_field = 'username'
 
     def create(self, validated_data):

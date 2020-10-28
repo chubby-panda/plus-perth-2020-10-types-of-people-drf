@@ -11,23 +11,24 @@ class CustomUser(AbstractUser):
 
 
 class MentorProfile(models.Model):
-    name = models.CharField(max_length=300, blank=True)
-    bio = models.CharField(max_length=5000, blank=True)
+    name = models.CharField(max_length=300, blank=True, null=True)
+    bio = models.CharField(max_length=5000, blank=True, null=True)
     user = models.OneToOneField(
         CustomUser,
         on_delete=models.CASCADE,
         null=True,
         related_name='mentor_profile',
     )
+    skills = models.ManyToManyField(CustomUser,related_name='mentors')
 
     def __str__(self):
         return self.user.username
 
    
 class OrgProfile(models.Model):
-    company_name = models.CharField(max_length=300, blank=True)
-    contact_name = models.CharField(max_length=300, blank=True)
-    org_bio = models.CharField(max_length=5000, blank=True)
+    company_name = models.CharField(max_length=300, blank=True, null=True)
+    contact_name = models.CharField(max_length=300, blank=True, null=True)
+    org_bio = models.CharField(max_length=5000, blank=True, null=True)
     user = models.OneToOneField(
         CustomUser,
         on_delete=models.CASCADE,
