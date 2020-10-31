@@ -14,13 +14,17 @@ class CustomUserCreate(generics.CreateAPIView):
     """
     View for registering new account.
     """
+    # Permissions: not logged in
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+
     def check_permissions(self, request):
         if request.user.is_authenticated:
             self.permission_denied(request)
 
+
 class ChangePasswordView(generics.UpdateAPIView):
+    # Permissions: logged in
     serializer_class = ChangePasswordSerializer
     model = CustomUser
     permission_classes = (IsAuthenticated,)
@@ -51,7 +55,9 @@ class ChangePasswordView(generics.UpdateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class CustomUserList(APIView):
+    # Permissions: admin users only
 
     def get(self, request):
         users = CustomUser.objects.all()
@@ -60,6 +66,7 @@ class CustomUserList(APIView):
 
 
 class CustomUserDetail(APIView):
+    # Permissions: only the retrieved user can update/delete, or read-only
     # permission_classes = [permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly]
     lookup_field = 'username'
 
@@ -86,45 +93,50 @@ class CustomUserDetail(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                serializer.data, 
-                status = status.HTTP_200_OK
+                serializer.data,
+                status=status.HTTP_200_OK
             )
-        return Response (
+        return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     def delete(self, request, username):
         user = self.get_object(username)
         self.check_object_permissions(request, user)
 
         try:
             user.delete()
-            return Response(status = status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except CustomUser.DoesNotExist:
             raise Http404
 
+
 class MentorProfileDetail(APIView):
-    permission_classes = [IsProfileUserOrReadOnly,]
+    # RETURNS THE WRONG ERROR MESSAGE -- RECHECK THIS
+    permission_classes = [IsProfileUserOrReadOnly, ]
     serializer_class = MentorProfileSerializer
 
     def get_object(self, username):
         try:
-            mentor_profile = MentorProfile.objects.select_related('user').get(user__username=username)
+            mentor_profile = MentorProfile.objects.select_related(
+                'user').get(user__username=username)
             self.check_object_permissions(self.request, mentor_profile)
             return mentor_profile
         except Exception as e:
             print(e)
             raise Http404
-    
+
     def get(self, request, username):
         mentor_profile = self.get_object(username=username)
-        serializer= MentorProfileSerializer(mentor_profile)
+        serializer = MentorProfileSerializer(mentor_profile)
         return Response(serializer.data)
 
     def put(self, request, username):
         mentor_profile = self.get_object(username=username)
-        serializer = MentorProfileSerializer(mentor_profile, data=request.data, partial=True)
+        self.check_object_permissions(request, mentor_profile)
+        serializer = MentorProfileSerializer(
+            mentor_profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(
@@ -136,27 +148,30 @@ class MentorProfileDetail(APIView):
             status.HTTP_400_BAD_REQUEST
         )
 
+
 class OrgProfileDetail(APIView):
-    permission_classes = [IsProfileUserOrReadOnly,]
+    # Permissions: only the retrieved user can update/delete, or read-only
+    permission_classes = [IsProfileUserOrReadOnly, ]
     serializer_class = OrgProfileSerializer
 
     def get_object(self, username):
         try:
-            org_profile = OrgProfile.objects.select_related('user').get(user__username=username)
+            org_profile = OrgProfile.objects.select_related(
+                'user').get(user__username=username)
             self.check_object_permissions(self.request, org_profile)
             return org_profile
-        except Exception as e:
-            print(e)
+        except org_profile.DoesNotExist:
             raise Http404
-    
+
     def get(self, request, username):
         org_profile = self.get_object(username=username)
-        serializer= OrgProfileSerializer(org_profile)
+        serializer = OrgProfileSerializer(org_profile)
         return Response(serializer.data)
 
     def put(self, request, username):
         org_profile = self.get_object(username=username)
-        serializer = OrgProfileSerializer(org_profile, data=request.data, partial=True)
+        serializer = OrgProfileSerializer(
+            org_profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(

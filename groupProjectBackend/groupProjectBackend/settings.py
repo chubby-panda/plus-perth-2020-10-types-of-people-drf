@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'events.apps.EventsConfig',
     'users.apps.UsersConfig',
     'rest_framework',
+    'django_extensions',
     'rest_framework.authtoken',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -90,7 +91,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-        'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'groupProjectBackend.urls'
