@@ -46,6 +46,22 @@
     "fields": { "app_label": "authtoken", "model": "token" }
   },
   {
+    "model": "contenttypes.contenttype",
+    "fields": { "app_label": "events", "model": "response" }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "fields": { "app_label": "events", "model": "register" }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "fields": { "app_label": "users", "model": "mentorprofile" }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "fields": { "app_label": "users", "model": "orgprofile" }
+  },
+  {
     "model": "sessions.session",
     "pk": "x7yx0fv2zd8zx639mou1o16x5f5cbe1s",
     "fields": {
@@ -342,6 +358,134 @@
     }
   },
   {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can add response",
+      "content_type": ["events", "response"],
+      "codename": "add_response"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change response",
+      "content_type": ["events", "response"],
+      "codename": "change_response"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can delete response",
+      "content_type": ["events", "response"],
+      "codename": "delete_response"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view response",
+      "content_type": ["events", "response"],
+      "codename": "view_response"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can add register",
+      "content_type": ["events", "register"],
+      "codename": "add_register"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change register",
+      "content_type": ["events", "register"],
+      "codename": "change_register"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can delete register",
+      "content_type": ["events", "register"],
+      "codename": "delete_register"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view register",
+      "content_type": ["events", "register"],
+      "codename": "view_register"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can add mentor profile",
+      "content_type": ["users", "mentorprofile"],
+      "codename": "add_mentorprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change mentor profile",
+      "content_type": ["users", "mentorprofile"],
+      "codename": "change_mentorprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can delete mentor profile",
+      "content_type": ["users", "mentorprofile"],
+      "codename": "delete_mentorprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view mentor profile",
+      "content_type": ["users", "mentorprofile"],
+      "codename": "view_mentorprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can add org profile",
+      "content_type": ["users", "orgprofile"],
+      "codename": "add_orgprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can change org profile",
+      "content_type": ["users", "orgprofile"],
+      "codename": "change_orgprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can delete org profile",
+      "content_type": ["users", "orgprofile"],
+      "codename": "delete_orgprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "fields": {
+      "name": "Can view org profile",
+      "content_type": ["users", "orgprofile"],
+      "codename": "view_orgprofile"
+    }
+  },
+  {
     "model": "users.customuser",
     "fields": {
       "password": "pbkdf2_sha256$180000$HrjmuttEFCTU$oKC8qVAIHUKPsBLtNKdFru1AC5VwLiLm735rLmZ6xto=",
@@ -360,6 +504,42 @@
     }
   },
   {
+    "model": "users.customuser",
+    "fields": {
+      "password": "pbkdf2_sha256$180000$G8YA39qXJfcB$IZ09Us/QWNySpC9xzk36OyxvNSJxNL35rojgf3Ves60=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "test2",
+      "first_name": "",
+      "last_name": "",
+      "email": "test2@test.com",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2020-10-24T07:08:47.598Z",
+      "is_org": false,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "events.register",
+    "pk": 1,
+    "fields": {
+      "event": 1,
+      "mentor": ["admin"],
+      "date_registered": "2020-10-31T01:21:43.409Z"
+    }
+  },
+  {
+    "model": "events.register",
+    "pk": 2,
+    "fields": {
+      "event": 1,
+      "mentor": ["admin"],
+      "date_registered": "2020-10-31T01:21:43.409Z"
+    }
+  },
+  {
     "model": "events.event",
     "pk": 1,
     "fields": {
@@ -371,23 +551,13 @@
       "event_date": "2020-09-03T03:38:54.684Z",
       "event_location": "Perth",
       "organiser": ["admin"],
-      "category": 1
+      "categories": []
     }
   },
   {
-    "model": "events.event",
-    "pk": 2,
-    "fields": {
-      "event_name": "Project 2",
-      "event_description": "The 2 project.",
-      "event_image": "https://via.placeholder.com/300.jpg",
-      "is_open": true,
-      "date_created": "2020-09-02T05:44:48.925Z",
-      "event_date": "2020-09-03T03:38:54.684Z",
-      "event_location": "Perth",
-      "organiser": ["admin"],
-      "category": 5
-    }
+    "model": "authtoken.token",
+    "pk": "85c913cee7c594e01ed6c9a79e66e7ffdddca1c3",
+    "fields": { "user": ["test2"], "created": "2020-10-24T07:10:21.924Z" }
   },
   {
     "model": "authtoken.token",
