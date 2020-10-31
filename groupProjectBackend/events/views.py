@@ -4,10 +4,9 @@ from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
-from users.models import CustomUser
 from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer, MentorCategory
 from .permissions import IsOwnerOrReadOnly, isSuperUser, IsOrganisationOrReadOnly
-
+from users.models import CustomUser
 
 class CategoryList(APIView):
     """
