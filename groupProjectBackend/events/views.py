@@ -5,9 +5,9 @@ from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
-from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
+from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer, MentorCategory
 from .permissions import IsOwnerOrReadOnly, isSuperUser, IsOrganisationOrReadOnly
-
+from users.models import CustomUser
 
 class CategoryList(APIView):
     """
@@ -214,3 +214,26 @@ class MentorsRegisterList(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class MentorAttendanceView(APIView):
+
+    def get_object(self, username):
+        try:
+            return CustomUser.objects.get(username=username)
+        except CustomUser.DoesNotExist:
+            raise Http404
+
+    def get(self, request, username):
+        mentor = self.get_object(username=username)
+        attended = Register.objects.all().filter(mentor=mentor)
+        serializer = MentorCategory(attended, many=True)
+        return Response(serializer.data)
+
+class EventHostedView(APIView):
+
+    def get(self, request, username):
+        organiser = CustomUser.objects.get(username=username)
+        hosted = Event.objects.all().filter(organiser=organiser)
+        serializer = EventSerializer(hosted, many=True)
+        return Response(serializer.data)
