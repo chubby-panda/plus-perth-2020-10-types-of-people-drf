@@ -4,9 +4,10 @@ from django.contrib.auth import get_user_model
 
 class Category(models.Model):
     category = models.CharField(max_length=100, unique=True)
-    category_icon = models.URLField(
-        max_length=120, default="https://via.placeholder.com/300.jpg")
-
+    # category_icon = models.URLField(
+    #     max_length=120, default="https://via.placeholder.com/300.jpg")
+    # category icon removed from backend for now
+    
     def __str__(self):
         return self.category
 
