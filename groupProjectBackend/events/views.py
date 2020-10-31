@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import Count
 from django.http import Http404
 from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
@@ -109,6 +110,18 @@ class EventList(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class PopularEventsList(APIView):
+    """
+    Returns list of projects from most responses to least
+    """
+
+    def get(self, request):
+        events = Event.objects.annotate(num_responses=Count(
+            'responses')).order_by('-num_responses')
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
 
 
 class CategoryProjectList(APIView):
