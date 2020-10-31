@@ -5,8 +5,8 @@ from .models import Event, Category, Register
 class CategorySerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
     category = serializers.CharField(max_length=100)
-    category_icon = serializers.URLField(
-        max_length=120, default="https://via.placeholder.com/300.jpg")
+    # category_icon = serializers.URLField(
+    #     max_length=120, default="https://via.placeholder.com/300.jpg")
     lookup_field = 'category'
 
     def create(self, validated_data):
