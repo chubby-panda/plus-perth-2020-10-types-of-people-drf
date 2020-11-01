@@ -214,6 +214,23 @@ class MentorsRegisterList(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+    def delete(self, request, pk):
+        event_registrations = Register.objects.all().filter(event=self.get_object(pk))   
+        user_registration = event_registrations.filter(mentor=request.user)
+        if len(user_registration) > 0:
+            user_registration.delete()
+            return Response(
+                status=status.HTTP_200_OK
+            )
+        if len(user_registration) == 0:
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
+
+class MentorsRegisterDetailView(APIView):
+    permission_classes = [IsOwnerOrReadOnly]
+    serializer_class = RegisterSerializer 
+
 
 
 class MentorAttendanceView(APIView):
