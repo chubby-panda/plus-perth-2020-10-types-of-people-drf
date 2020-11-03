@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     'events.apps.EventsConfig',
     'users.apps.UsersConfig',
     'rest_framework',
-    'django_extensions',
     'rest_framework.authtoken',
     'django.contrib.admin',
     'django.contrib.auth',

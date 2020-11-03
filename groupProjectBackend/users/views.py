@@ -6,15 +6,15 @@ from .models import CustomUser, MentorProfile, OrgProfile
 from .serializers import CustomUserSerializer, MentorProfileSerializer, OrgProfileSerializer, ChangePasswordSerializer
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
-from .permissions import IsOwnerOrReadOnly, IsProfileUserOrReadOnly
-from rest_framework.permissions import IsAuthenticated
+from .permissions import IsOwnerOrReadOnly, IsProfileUserOrReadOnly, IsNotAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 
 class CustomUserCreate(generics.CreateAPIView):
     """
     View for registering new account.
     """
-    # Permissions: not logged in
+    permission_classes = [IsNotAuthenticated, ]
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
@@ -24,10 +24,9 @@ class CustomUserCreate(generics.CreateAPIView):
 
 
 class ChangePasswordView(generics.UpdateAPIView):
-    # Permissions: logged in
     serializer_class = ChangePasswordSerializer
     model = CustomUser
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated, ]
 
     def get_object(self, queryset=None):
         obj = self.request.user
@@ -37,11 +36,8 @@ class ChangePasswordView(generics.UpdateAPIView):
         self.object = self.get_object()
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            # Check old password
-
             if not self.object.check_password(serializer.data.get("old_password")):
                 return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
-            # set_password also hashes the password that the user will get
             self.object.set_password(serializer.data.get("new_password"))
             self.object.save()
             response = {
@@ -57,7 +53,7 @@ class ChangePasswordView(generics.UpdateAPIView):
 
 
 class CustomUserList(APIView):
-    # Permissions: admin users only
+    permission_classes = [IsAdminUser, ]
 
     def get(self, request):
         users = CustomUser.objects.all()
@@ -66,8 +62,7 @@ class CustomUserList(APIView):
 
 
 class CustomUserDetail(APIView):
-    # Permissions: only the retrieved user can update/delete, or read-only
-    # permission_classes = [permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly, ]
     lookup_field = 'username'
 
     def get_object(self, username):
@@ -113,7 +108,6 @@ class CustomUserDetail(APIView):
 
 
 class MentorProfileDetail(APIView):
-    # RETURNS THE WRONG ERROR MESSAGE -- RECHECK THIS
     permission_classes = [IsProfileUserOrReadOnly, ]
     serializer_class = MentorProfileSerializer
 
@@ -123,8 +117,7 @@ class MentorProfileDetail(APIView):
                 'user').get(user__username=username)
             self.check_object_permissions(self.request, mentor_profile)
             return mentor_profile
-        except Exception as e:
-            print(e)
+        except mentor_profile.DoesNotExist:
             raise Http404
 
     def get(self, request, username):
@@ -150,7 +143,6 @@ class MentorProfileDetail(APIView):
 
 
 class OrgProfileDetail(APIView):
-    # Permissions: only the retrieved user can update/delete, or read-only
     permission_classes = [IsProfileUserOrReadOnly, ]
     serializer_class = OrgProfileSerializer
 
