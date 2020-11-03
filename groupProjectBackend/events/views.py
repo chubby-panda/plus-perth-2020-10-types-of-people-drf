@@ -5,15 +5,16 @@ from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
-from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer, MentorCategory
-from .permissions import IsOwnerOrReadOnly, isSuperUser, IsOrganisationOrReadOnly
+from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
+from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered
 from users.models import CustomUser
+
 
 class CategoryList(APIView):
     """
     Returns list of all categories
     """
-    permission_classes = [isSuperUser, permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsSuperUser, ]
 
     def get(self, request):
         categories = Category.objects.all()
@@ -21,16 +22,15 @@ class CategoryList(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+        self.check_permissions(request)
         serializer = CategorySerializer(data=request.data)
 
         if serializer.is_valid():
-            # print(request.user.is_superuser)
-            if (request.user.is_superuser):
-                serializer.save()
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED
-                )
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
         return Response(
             serializer.errors,
             status=status.HTTP_401_UNAUTHORIZED
@@ -41,7 +41,7 @@ class CategoryDetail(APIView):
     """
     Returns details of specified category
     """
-    permission_classes = [isSuperUser, ]
+    permission_classes = [IsSuperUser, ]
     serializer_class = CategorySerializer
 
     def get_object(self, category):
@@ -139,7 +139,7 @@ class EventDetail(APIView):
     """
     Returns details of specified event
     """
-    permission_classes = [IsOwnerOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly, ]
     serializer_class = EventDetailSerializer
 
     def get_object(self, pk):
@@ -189,6 +189,7 @@ class MentorsRegisterList(APIView):
     Returns a list of mentors for specified event
     Posts a mentor register object
     """
+    permission_classes = [HasNotRegistered, ]
 
     def get_object(self, pk):
         try:
@@ -202,6 +203,7 @@ class MentorsRegisterList(APIView):
         return Response(serializer.data)
 
     def post(self, request, pk):
+        self.check_object_permissions(request, pk)
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
