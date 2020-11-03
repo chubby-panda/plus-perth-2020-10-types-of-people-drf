@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from .models import Event, Category, Register
 from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
 from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered
+from users.models import CustomUser
 
 
 class CategoryList(APIView):
@@ -215,3 +216,43 @@ class MentorsRegisterList(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+    def delete(self, request, pk):
+        event_registrations = Register.objects.all().filter(event=self.get_object(pk))   
+        user_registration = event_registrations.filter(mentor=request.user)
+        if len(user_registration) > 0:
+            user_registration.delete()
+            return Response(
+                status=status.HTTP_200_OK
+            )
+        if len(user_registration) == 0:
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
+
+class MentorsRegisterDetailView(APIView):
+    permission_classes = [IsOwnerOrReadOnly]
+    serializer_class = RegisterSerializer 
+
+
+
+class MentorAttendanceView(APIView):
+
+    def get_object(self, username):
+        try:
+            return CustomUser.objects.get(username=username)
+        except CustomUser.DoesNotExist:
+            raise Http404
+
+    def get(self, request, username):
+        mentor = self.get_object(username=username)
+        attended = Register.objects.all().filter(mentor=mentor)
+        serializer = MentorCategory(attended, many=True)
+        return Response(serializer.data)
+
+class EventHostedView(APIView):
+
+    def get(self, request, username):
+        organiser = CustomUser.objects.get(username=username)
+        hosted = Event.objects.all().filter(organiser=organiser)
+        serializer = EventSerializer(hosted, many=True)
+        return Response(serializer.data)
