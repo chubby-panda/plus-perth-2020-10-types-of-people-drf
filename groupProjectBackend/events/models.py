@@ -19,6 +19,8 @@ class Event(models.Model):
     is_open = models.BooleanField(default=True)
     date_created = models.DateTimeField(auto_now_add=True, editable=False)
     event_date = models.DateTimeField()
+    event_start = models.TimeField(blank=True, null=True)
+    event_end = models.TimeField(blank=True, null=True)
     event_location = models.CharField(max_length=120)
     organiser = models.ForeignKey(
         get_user_model(),

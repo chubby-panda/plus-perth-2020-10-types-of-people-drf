@@ -21,6 +21,8 @@ class EventSerializer(serializers.Serializer):
     is_open = serializers.BooleanField(default=True)
     date_created = serializers.DateTimeField(read_only=True)
     event_date = serializers.DateTimeField()
+    event_start = serializers.TimeField(format='%H:%M')
+    event_end = serializers.TimeField(format='%H:%M')
     event_location = serializers.CharField(max_length=120)
     organiser = serializers.ReadOnlyField(source='organiser.username')
     categories = serializers.SlugRelatedField(
@@ -82,6 +84,10 @@ class EventDetailSerializer(EventSerializer):
             'organiser', instance.organiser)
         instance.event_date = validated_data.get(
             'event_date', instance.event_date)
+        instance.event_start = validated_data.get(
+            'event_start', instance.event_start)
+        instance.event_end = validated_data.get(
+            'event_end', instance.event_end)
         instance.event_location = validated_data.get(
             'event_location', instance.event_location)
         instance.save()
