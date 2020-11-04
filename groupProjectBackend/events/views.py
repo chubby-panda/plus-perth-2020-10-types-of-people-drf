@@ -1,18 +1,20 @@
 from django.shortcuts import render
+from django.db.models import Count
 from django.http import Http404
 from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
 from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
-from .permissions import IsOwnerOrReadOnly, isSuperUser, IsOrganisationOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered
+from users.models import CustomUser
 
 
 class CategoryList(APIView):
     """
     Returns list of all categories
     """
-    permission_classes = [isSuperUser, permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsSuperUser, ]
 
     def get(self, request):
         categories = Category.objects.all()
@@ -20,16 +22,15 @@ class CategoryList(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+        self.check_permissions(request)
         serializer = CategorySerializer(data=request.data)
 
         if serializer.is_valid():
-            # print(request.user.is_superuser)
-            if (request.user.is_superuser):
-                serializer.save()
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED
-                )
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
         return Response(
             serializer.errors,
             status=status.HTTP_401_UNAUTHORIZED
@@ -40,7 +41,7 @@ class CategoryDetail(APIView):
     """
     Returns details of specified category
     """
-    permission_classes = [isSuperUser, ]
+    permission_classes = [IsSuperUser, ]
     serializer_class = CategorySerializer
 
     def get_object(self, category):
@@ -111,6 +112,18 @@ class EventList(APIView):
         )
 
 
+class PopularEventsList(APIView):
+    """
+    Returns list of projects from most responses to least
+    """
+
+    def get(self, request):
+        events = Event.objects.annotate(num_responses=Count(
+            'responses')).order_by('-num_responses')
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
+
+
 class CategoryProjectList(APIView):
     """
     Returns list of projects of specified category
@@ -126,7 +139,7 @@ class EventDetail(APIView):
     """
     Returns details of specified event
     """
-    permission_classes = [IsOwnerOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly, ]
     serializer_class = EventDetailSerializer
 
     def get_object(self, pk):
@@ -176,6 +189,7 @@ class MentorsRegisterList(APIView):
     Returns a list of mentors for specified event
     Posts a mentor register object
     """
+    permission_classes = [HasNotRegistered, ]
 
     def get_object(self, pk):
         try:
@@ -189,6 +203,7 @@ class MentorsRegisterList(APIView):
         return Response(serializer.data)
 
     def post(self, request, pk):
+        self.check_object_permissions(request, pk)
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -201,3 +216,43 @@ class MentorsRegisterList(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+    def delete(self, request, pk):
+        event_registrations = Register.objects.all().filter(event=self.get_object(pk))   
+        user_registration = event_registrations.filter(mentor=request.user)
+        if len(user_registration) > 0:
+            user_registration.delete()
+            return Response(
+                status=status.HTTP_200_OK
+            )
+        if len(user_registration) == 0:
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
+
+class MentorsRegisterDetailView(APIView):
+    permission_classes = [IsOwnerOrReadOnly]
+    serializer_class = RegisterSerializer 
+
+
+
+class MentorAttendanceView(APIView):
+
+    def get_object(self, username):
+        try:
+            return CustomUser.objects.get(username=username)
+        except CustomUser.DoesNotExist:
+            raise Http404
+
+    def get(self, request, username):
+        mentor = self.get_object(username=username)
+        attended = Register.objects.all().filter(mentor=mentor)
+        serializer = MentorCategory(attended, many=True)
+        return Response(serializer.data)
+
+class EventHostedView(APIView):
+
+    def get(self, request, username):
+        organiser = CustomUser.objects.get(username=username)
+        hosted = Event.objects.all().filter(organiser=organiser)
+        serializer = EventSerializer(hosted, many=True)
+        return Response(serializer.data)

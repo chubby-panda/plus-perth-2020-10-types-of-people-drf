@@ -21,6 +21,8 @@ class EventSerializer(serializers.Serializer):
     is_open = serializers.BooleanField(default=True)
     date_created = serializers.DateTimeField(read_only=True)
     event_date = serializers.DateTimeField()
+    event_start = serializers.TimeField(format='%H:%M')
+    event_end = serializers.TimeField(format='%H:%M')
     event_location = serializers.CharField(max_length=120)
     organiser = serializers.ReadOnlyField(source='organiser.username')
     categories = serializers.SlugRelatedField(
@@ -60,10 +62,13 @@ class EventDetailSerializer(EventSerializer):
 
     def update(self, instance, validated_data):
 
+        categories_updated = False
         # Get the categories from the input data
-        categories_data = validated_data.pop('categories')
-        # Get the current categories
-        categories = instance.categories
+        if validated_data.get('categories', None) is not None:
+            categories_data = validated_data.pop('categories')
+            # Get the current categories
+            categories = instance.categories
+            categories_updated = True
 
         # Update the other fields
         instance.event_name = validated_data.get(
@@ -79,13 +84,18 @@ class EventDetailSerializer(EventSerializer):
             'organiser', instance.organiser)
         instance.event_date = validated_data.get(
             'event_date', instance.event_date)
+        instance.event_start = validated_data.get(
+            'event_start', instance.event_start)
+        instance.event_end = validated_data.get(
+            'event_end', instance.event_end)
         instance.event_location = validated_data.get(
             'event_location', instance.event_location)
         instance.save()
 
         # Reset the categories data
-        categories.clear()
-        categories.set(categories_data)
+        if categories_updated:
+            categories.clear()
+            categories.set(categories_data)
 
         instance.save()
         return instance
