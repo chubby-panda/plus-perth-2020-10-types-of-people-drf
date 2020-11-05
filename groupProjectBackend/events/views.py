@@ -124,6 +124,33 @@ class PopularEventsList(APIView):
         return Response(serializer.data)
 
 
+class LocationEventsList(APIView):
+    """
+    Returns list of events within 60km of a given location
+    """
+
+    def get(self, request):
+        # Get user coordinates
+        profile = MentorProfile.objects.get(user=request.user)
+        latitude = float(profile.latitude)
+        longitude = float(profile.longitude)
+        R = 6378.137
+
+        # Filter events by distance from user location using Great Circle formula
+        events = Event.objects.annotate(distance=(
+            R * (2 * ATan2(Sqrt(Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2),
+                           Sqrt(1 - (Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2))))
+        )).order_by('distance')
+
+        print("Events:", events)
+        for event in events:
+            print("Event name:", event.event_name)
+            print("Event location:", event.event_location)
+            print("Event distance:", event.distance)
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
+
+
 class CategoryProjectList(APIView):
     """
     Returns list of projects of specified category
@@ -216,8 +243,9 @@ class MentorsRegisterList(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
     def delete(self, request, pk):
-        event_registrations = Register.objects.all().filter(event=self.get_object(pk))   
+        event_registrations = Register.objects.all().filter(event=self.get_object(pk))
         user_registration = event_registrations.filter(mentor=request.user)
         if len(user_registration) > 0:
             user_registration.delete()
@@ -229,10 +257,10 @@ class MentorsRegisterList(APIView):
                 status=status.HTTP_204_NO_CONTENT
             )
 
+
 class MentorsRegisterDetailView(APIView):
     permission_classes = [IsOwnerOrReadOnly]
-    serializer_class = RegisterSerializer 
-
+    serializer_class = RegisterSerializer
 
 
 class MentorAttendanceView(APIView):
@@ -248,6 +276,7 @@ class MentorAttendanceView(APIView):
         attended = Register.objects.all().filter(mentor=mentor)
         serializer = MentorCategory(attended, many=True)
         return Response(serializer.data)
+
 
 class EventHostedView(APIView):
 
