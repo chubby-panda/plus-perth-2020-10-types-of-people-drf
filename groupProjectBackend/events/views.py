@@ -7,7 +7,10 @@ from rest_framework.response import Response
 from .models import Event, Category, Register
 from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
 from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered
-from users.models import CustomUser
+from users.models import CustomUser, MentorProfile
+from math import radians, cos, sin, asin, sqrt
+from django.db.models import F, Func
+from django.db.models.functions import Sin, Cos, Sqrt, ASin, Radians, ATan2
 
 
 class CategoryList(APIView):
@@ -126,27 +129,24 @@ class PopularEventsList(APIView):
 
 class LocationEventsList(APIView):
     """
-    Returns list of events within 60km of a given location
+    Returns list of events within a specifed distance of a logged-in user
+    Limited to 10 events, listed by closest to furthest
+    Pass the kms into the url
     """
 
-    def get(self, request):
+    def get(self, request, kms):
         # Get user coordinates
         profile = MentorProfile.objects.get(user=request.user)
         latitude = float(profile.latitude)
         longitude = float(profile.longitude)
-        R = 6378.137
+        radius = 6378.137  # this is in kms
 
         # Filter events by distance from user location using Great Circle formula
         events = Event.objects.annotate(distance=(
-            R * (2 * ATan2(Sqrt(Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2),
-                           Sqrt(1 - (Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2))))
-        )).order_by('distance')
+            radius * (2 * ATan2(Sqrt(Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2),
+                                Sqrt(1 - (Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2))))
+        )).filter(distance__lte=kms).order_by('distance')[:10]
 
-        print("Events:", events)
-        for event in events:
-            print("Event name:", event.event_name)
-            print("Event location:", event.event_location)
-            print("Event distance:", event.distance)
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
