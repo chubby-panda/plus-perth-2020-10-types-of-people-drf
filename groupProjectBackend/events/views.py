@@ -129,7 +129,7 @@ class PopularEventsList(APIView):
 
 class PopularEventsShortList(APIView):
     """
-    Returns list of projects from most responses to least
+    Returns shortlist (6) of projects from most responses to least
     """
 
     def get(self, request):
@@ -141,8 +141,7 @@ class PopularEventsShortList(APIView):
 
 class LocationEventsList(APIView):
     """
-    Returns list of events within a specifed distance of a logged-in user
-    Limited to 10 events, listed by closest to furthest
+    Returns list of events within a specifed distance of a logged-in user (closest to furthest)
     Pass the kms into the url
     """
 
@@ -157,8 +156,10 @@ class LocationEventsList(APIView):
         events = Event.objects.annotate(distance=(
             radius * (2 * ATan2(Sqrt(Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2),
                                 Sqrt(1 - (Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2))))
-        )).filter(distance__lte=kms).order_by('distance')[:12]
+        )).filter(distance__lte=kms).order_by('distance')
 
+        for event in events:
+            print("EVENT DISTANCE", event.distance)
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
@@ -176,7 +177,7 @@ class CategoryProjectList(APIView):
 
 class CategoryProjectShortList(APIView):
     """
-    Returns list of projects of specified category
+    Returns shortlist (6) of projects of specified category
     """
 
     def get(self, request, category):
