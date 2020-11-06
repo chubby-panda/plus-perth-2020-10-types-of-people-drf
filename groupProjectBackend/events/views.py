@@ -236,7 +236,8 @@ class MentorsRegisterDetailView(APIView):
 
 
 class MentorAttendanceView(APIView):
-
+    """The attended variable here just refers to whether or not they expressed interest, 
+    not whether they actually attended the event."""
     def get_object(self, username):
         try:
             return CustomUser.objects.get(username=username)
@@ -248,6 +249,21 @@ class MentorAttendanceView(APIView):
         attended = Register.objects.all().filter(mentor=mentor)
         serializer = MentorCategory(attended, many=True)
         return Response(serializer.data)
+
+class MentorAttendanceConfirmedView(APIView):
+    """List of mentors that attended the event, as confirmed by the org"""
+    def get_object(self, username):
+        try:
+            return CustomUser.objects.get(username=username)
+        except CustomUser.DoesNotExist:
+            raise Http404
+
+    def get(self, request, username):
+        mentor = self.get_object(username=username)
+        attended = Register.objects.all().filter(mentor=mentor)
+        serializer = MentorCategory(attended, many=True)
+        return Response(serializer.data)
+
 
 class EventHostedView(APIView):
 

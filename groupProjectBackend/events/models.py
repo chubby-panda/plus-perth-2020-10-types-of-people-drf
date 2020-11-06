@@ -46,4 +46,5 @@ class Register(models.Model):
         related_name='mentor_response'
     )
     date_registered = models.DateTimeField(auto_now_add=True, editable=False)
+    attended = models.BooleanField(default=False)
     # approved = models.BooleanField(default=False)
