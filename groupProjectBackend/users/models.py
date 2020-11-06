@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+
 class CustomUser(AbstractUser):
     is_org = models.BooleanField('is organisation', default=False)
 
@@ -13,18 +14,23 @@ class CustomUser(AbstractUser):
 class MentorProfile(models.Model):
     name = models.CharField(max_length=300, blank=True, null=True)
     bio = models.CharField(max_length=5000, blank=True, null=True)
+    location = models.CharField(max_length=300, default="Perth, WA, Australia")
+    latitude = models.DecimalField(
+        max_digits=15, decimal_places=10, default=-31.95351)
+    longitude = models.DecimalField(
+        max_digits=15, decimal_places=10, default=115.85705)
     user = models.OneToOneField(
         CustomUser,
         on_delete=models.CASCADE,
         null=True,
         related_name='mentor_profile',
     )
-    skills = models.ManyToManyField(CustomUser,related_name='mentors')
+    skills = models.ManyToManyField(CustomUser, related_name='mentors')
 
     def __str__(self):
         return self.user.username
 
-   
+
 class OrgProfile(models.Model):
     company_name = models.CharField(max_length=300, blank=True, null=True)
     contact_name = models.CharField(max_length=300, blank=True, null=True)
@@ -38,6 +44,7 @@ class OrgProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
 
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):

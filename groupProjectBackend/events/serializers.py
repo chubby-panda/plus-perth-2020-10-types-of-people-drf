@@ -23,7 +23,9 @@ class EventSerializer(serializers.Serializer):
     event_date = serializers.DateTimeField()
     event_start = serializers.TimeField(format='%H:%M')
     event_end = serializers.TimeField(format='%H:%M')
-    event_location = serializers.CharField(max_length=120)
+    event_location = serializers.CharField(max_length=300)
+    latitude = serializers.DecimalField(max_digits=15, decimal_places=10)
+    longitude = serializers.DecimalField(max_digits=15, decimal_places=10)
     organiser = serializers.ReadOnlyField(source='organiser.username')
     categories = serializers.SlugRelatedField(
         many=True, slug_field="category", queryset=Category.objects.all())
@@ -90,6 +92,9 @@ class EventDetailSerializer(EventSerializer):
             'event_end', instance.event_end)
         instance.event_location = validated_data.get(
             'event_location', instance.event_location)
+        instance.latitude = validated_data.get('latitude', instance.latitude)
+        instance.longitude = validated_data.get(
+            'longitude', instance.longitude)
         instance.save()
 
         # Reset the categories data
