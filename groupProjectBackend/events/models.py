@@ -18,9 +18,8 @@ class Event(models.Model):
     event_image = models.URLField(max_length=120)
     is_open = models.BooleanField(default=True)
     date_created = models.DateTimeField(auto_now_add=True, editable=False)
-    event_date = models.DateTimeField()
-    event_start = models.TimeField(blank=True, null=True)
-    event_end = models.TimeField(blank=True, null=True)
+    event_datetime_start = models.DateTimeField()
+    event_datetime_end = models.DateTimeField()
     event_location = models.CharField(max_length=300)
     latitude = models.DecimalField(
         max_digits=15, decimal_places=10, default=-31.95351)
