@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from events.models import Category
 
 
 class CustomUser(AbstractUser):
@@ -25,7 +26,7 @@ class MentorProfile(models.Model):
         null=True,
         related_name='mentor_profile',
     )
-    skills = models.ManyToManyField(CustomUser, related_name='mentors')
+    skills = models.ManyToManyField(Category, related_name='mentors')
 
     def __str__(self):
         return self.user.username

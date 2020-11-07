@@ -48,6 +48,8 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     location = serializers.CharField(max_length=300)
     latitude = serializers.DecimalField(max_digits=15, decimal_places=10)
     longitude = serializers.DecimalField(max_digits=15, decimal_places=10)
+    skills = serializers.SlugRelatedField(
+        many=True, slug_field="category", queryset=Category.objects.all())
 
     class Meta:
         model = MentorProfile
@@ -59,12 +61,27 @@ class MentorProfileSerializer(serializers.ModelSerializer):
         return MentorProfile.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
+        skills_updated = False
+        # Get the skills from the input data
+        if validated_data.get('skills', None) is not None:
+            skills_data = validated_data.pop('skills')
+            # Get the current skills
+            skills = instance.skills
+            skills_updated = True
+
         instance.name = validated_data.get('name', instance.name)
         instance.bio = validated_data.get('bio', instance.bio)
         instance.location = validated_data.get('location', instance.location)
         instance.latitude = validated_data.get('latitude', instance.latitude)
         instance.longitude = validated_data.get(
             'longitude', instance.longitude)
+        instance.save()
+
+        # Reset the skills data
+        if skills_updated:
+            skills.clear()
+            skills.set(skills_data)
+
         instance.save()
         return instance
 
