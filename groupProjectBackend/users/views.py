@@ -129,7 +129,7 @@ class MentorProfileDetail(APIView):
         mentor_profile = self.get_object(username=username)
         self.check_object_permissions(request, mentor_profile)
         serializer = MentorProfileSerializer(
-            mentor_profile, data=request.data, partial=True)
+            instance=mentor_profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(
