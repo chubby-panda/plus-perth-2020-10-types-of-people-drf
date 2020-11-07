@@ -20,9 +20,8 @@ class EventSerializer(serializers.Serializer):
     event_image = serializers.URLField(max_length=120)
     is_open = serializers.BooleanField(default=True)
     date_created = serializers.DateTimeField(read_only=True)
-    event_date = serializers.DateTimeField()
-    event_start = serializers.TimeField(format='%H:%M')
-    event_end = serializers.TimeField(format='%H:%M')
+    event_datetime_start = serializers.DateTimeField()
+    event_datetime_end = serializers.DateTimeField()
     event_location = serializers.CharField(max_length=300)
     latitude = serializers.DecimalField(max_digits=15, decimal_places=10)
     longitude = serializers.DecimalField(max_digits=15, decimal_places=10)
@@ -85,11 +84,9 @@ class EventDetailSerializer(EventSerializer):
         instance.organiser = validated_data.get(
             'organiser', instance.organiser)
         instance.event_date = validated_data.get(
-            'event_date', instance.event_date)
+            'event_datetime_start', instance.event_datetime_start)
         instance.event_start = validated_data.get(
-            'event_start', instance.event_start)
-        instance.event_end = validated_data.get(
-            'event_end', instance.event_end)
+            'event_datetime_end', instance.event_datetime_end)
         instance.event_location = validated_data.get(
             'event_location', instance.event_location)
         instance.latitude = validated_data.get('latitude', instance.latitude)
