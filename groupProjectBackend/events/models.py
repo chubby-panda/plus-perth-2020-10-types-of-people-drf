@@ -21,7 +21,7 @@ class Event(models.Model):
     event_date = models.DateTimeField()
     event_start = models.TimeField(blank=True, null=True)
     event_end = models.TimeField(blank=True, null=True)
-    event_location = models.CharField(max_length=300)
+    event_location = models.CharField(max_length=300, default="Perth, WA, Australia")
     latitude = models.DecimalField(
         max_digits=15, decimal_places=10, default=-31.95351)
     longitude = models.DecimalField(

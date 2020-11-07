@@ -58,6 +58,20 @@ class RegisterSerializer(serializers.Serializer):
         instance.save()
         return instance
 
+class AttendanceSerializer(serializers.Serializer):
+    """added to allow orgs to mark attendance"""
+    id = serializers.ReadOnlyField()
+    event = serializers.ReadOnlyField(source='event.id')
+    mentor = serializers.ReadOnlyField(source='mentor.username')
+    attended = serializers.BooleanField()
+
+
+    def update(self, instance, validated_data):
+        instance.attended = validated_data.get('attended', instance.attended)
+        instance.save()
+        return instance
+
+
 
 class EventDetailSerializer(EventSerializer):
     responses = RegisterSerializer(many=True, read_only=True)
