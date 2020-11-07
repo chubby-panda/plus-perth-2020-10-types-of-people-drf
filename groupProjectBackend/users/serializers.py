@@ -4,12 +4,12 @@ from rest_framework import serializers
 from .models import CustomUser, OrgProfile, MentorProfile
 from events.models import Category
 
+
 class CustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'password','is_org',)
-
+        fields = ('id', 'username', 'email', 'password', 'is_org',)
 
     def create(self, validated_data):
         user = CustomUser(**validated_data)
@@ -22,6 +22,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
 class ChangePasswordSerializer(serializers.Serializer):
     model = CustomUser
 
@@ -31,10 +32,12 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
+
 class UserSkillsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
+
 
 class MentorProfileSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()
@@ -42,10 +45,14 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
     bio = serializers.CharField(max_length=5000)
     name = serializers.CharField(max_length=300)
-    
+    location = serializers.CharField(max_length=300)
+    latitude = serializers.DecimalField(max_digits=15, decimal_places=10)
+    longitude = serializers.DecimalField(max_digits=15, decimal_places=10)
+
     class Meta:
         model = MentorProfile
-        fields = ['id', 'name', 'user', 'username','bio', 'skills']
+        fields = ['id', 'name', 'user', 'username', 'bio',
+                  'skills', 'location', 'latitude', 'longitude', ]
         lookup_field = 'username'
 
     def create(self, validated_data):
@@ -54,6 +61,10 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
         instance.bio = validated_data.get('bio', instance.bio)
+        instance.location = validated_data.get('location', instance.location)
+        instance.latitude = validated_data.get('latitude', instance.latitude)
+        instance.longitude = validated_data.get(
+            'longitude', instance.longitude)
         instance.save()
         return instance
 
@@ -66,18 +77,20 @@ class OrgProfileSerializer(serializers.ModelSerializer):
     username = serializers.ReadOnlyField(source='user.usermame')
     user = serializers.ReadOnlyField(source='user.username')
 
-    
     class Meta:
         model = OrgProfile
-        fields = ['id', 'company_name', 'contact_name', 'user', 'username','org_bio']
+        fields = ['id', 'company_name', 'contact_name',
+                  'user', 'username', 'org_bio']
         lookup_field = 'username'
 
     def create(self, validated_data):
         return OrgProfile.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        instance.company_name = validated_data.get('company_name', instance.company_name)
+        instance.company_name = validated_data.get(
+            'company_name', instance.company_name)
         instance.org_bio = validated_data.get('org_bio', instance.org_bio)
-        instance.contact_name = validated_data.get('contact_name', instance.contact_name)
+        instance.contact_name = validated_data.get(
+            'contact_name', instance.contact_name)
         instance.save()
         return instance

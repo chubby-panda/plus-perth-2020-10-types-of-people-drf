@@ -7,7 +7,10 @@ from rest_framework.response import Response
 from .models import Event, Category, Register
 from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
 from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered
-from users.models import CustomUser
+from users.models import CustomUser, MentorProfile
+from math import radians, cos, sin, asin, sqrt
+from django.db.models import F, Func
+from django.db.models.functions import Sin, Cos, Sqrt, ASin, Radians, ATan2
 
 
 class CategoryList(APIView):
@@ -124,6 +127,43 @@ class PopularEventsList(APIView):
         return Response(serializer.data)
 
 
+class PopularEventsShortList(APIView):
+    """
+    Returns shortlist (6) of projects from most responses to least
+    """
+
+    def get(self, request):
+        events = Event.objects.annotate(num_responses=Count(
+            'responses')).order_by('-num_responses')[:6]
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
+
+
+class LocationEventsList(APIView):
+    """
+    Returns list of events within a specifed distance of a logged-in user (closest to furthest)
+    Pass the kms into the url
+    """
+
+    def get(self, request, kms):
+        # Get user coordinates
+        profile = MentorProfile.objects.get(user=request.user)
+        latitude = float(profile.latitude)
+        longitude = float(profile.longitude)
+        radius = 6378.137  # this is in kms
+
+        # Filter events by distance from user location using Great Circle formula
+        events = Event.objects.annotate(distance=(
+            radius * (2 * ATan2(Sqrt(Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2),
+                                Sqrt(1 - (Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2))))
+        )).filter(distance__lte=kms).order_by('distance')
+
+        for event in events:
+            print("EVENT DISTANCE", event.distance)
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
+
+
 class CategoryProjectList(APIView):
     """
     Returns list of projects of specified category
@@ -131,6 +171,17 @@ class CategoryProjectList(APIView):
 
     def get(self, request, category):
         events = Event.objects.filter(categories__category=category)
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
+
+
+class CategoryProjectShortList(APIView):
+    """
+    Returns shortlist (6) of projects of specified category
+    """
+
+    def get(self, request, category):
+        events = Event.objects.filter(categories__category=category)[:6]
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
@@ -216,8 +267,9 @@ class MentorsRegisterList(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
     def delete(self, request, pk):
-        event_registrations = Register.objects.all().filter(event=self.get_object(pk))   
+        event_registrations = Register.objects.all().filter(event=self.get_object(pk))
         user_registration = event_registrations.filter(mentor=request.user)
         if len(user_registration) > 0:
             user_registration.delete()
@@ -229,10 +281,10 @@ class MentorsRegisterList(APIView):
                 status=status.HTTP_204_NO_CONTENT
             )
 
+
 class MentorsRegisterDetailView(APIView):
     permission_classes = [IsOwnerOrReadOnly]
-    serializer_class = RegisterSerializer 
-
+    serializer_class = RegisterSerializer
 
 
 class MentorAttendanceView(APIView):
@@ -248,6 +300,7 @@ class MentorAttendanceView(APIView):
         attended = Register.objects.all().filter(mentor=mentor)
         serializer = MentorCategory(attended, many=True)
         return Response(serializer.data)
+
 
 class EventHostedView(APIView):
 

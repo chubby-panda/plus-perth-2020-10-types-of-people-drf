@@ -7,7 +7,7 @@ class Category(models.Model):
     # category_icon = models.URLField(
     #     max_length=120, default="https://via.placeholder.com/300.jpg")
     # category icon removed from backend for now
-    
+
     def __str__(self):
         return self.category
 
@@ -21,7 +21,11 @@ class Event(models.Model):
     event_date = models.DateTimeField()
     event_start = models.TimeField(blank=True, null=True)
     event_end = models.TimeField(blank=True, null=True)
-    event_location = models.CharField(max_length=120)
+    event_location = models.CharField(max_length=300)
+    latitude = models.DecimalField(
+        max_digits=15, decimal_places=10, default=-31.95351)
+    longitude = models.DecimalField(
+        max_digits=15, decimal_places=10, default=115.85705)
     organiser = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
