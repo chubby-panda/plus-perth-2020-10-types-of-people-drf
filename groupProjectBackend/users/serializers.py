@@ -58,11 +58,12 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return MentorProfile.objects.create(**validated_data)
 
+
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
         instance.bio = validated_data.get('bio', instance.bio)
-        instance.location = validated_data.get('location', instance.location)
-        instance.latitude = validated_data.get('latitude', instance.latitude)
+        instance.location = validated_data.get('location', instance.location, default=-31.95351)
+        instance.latitude = validated_data.get('latitude', instance.latitude, default=115.85705)
         instance.longitude = validated_data.get(
             'longitude', instance.longitude)
         instance.save()

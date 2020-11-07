@@ -339,11 +339,7 @@ class EventAttendenceView(APIView):
         event=self.get.object(pk=pk)
         registrations = Register.objects.filter(event=event)
         serializer = AttendanceSerializer(registrations, many=True)
-        serializer = EventDetailSerializer(
-            instance=event,
-            data=data,
-            partial=True
-        )
+        serializer = EventDetailSerializer(instance=event)
         if serializer.is_valid():
             serializer.save()
             return Response(

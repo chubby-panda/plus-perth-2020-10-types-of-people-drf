@@ -10,8 +10,9 @@ urlpatterns = [
     path('events/location/<int:kms>/', views.LocationEventsList.as_view()),
     path('events/<int:pk>/responses/', views.MentorsRegisterList.as_view()),
     #adding new url to allow org to mark attendane
-    path('events/<int:pk>/attendance/', views.EventAttendenceView.as_view()),
+
     path('events/<int:pk>/', views.EventDetail.as_view()),
+    path('events/<int:pk>/attendance/', views.EventAttendenceView.as_view()),
     path('events/categories/', views.CategoryList.as_view()),
     path('events/categories/<str:category>/', views.CategoryDetail.as_view()),
     path('events/categories/<str:category>/events/',
