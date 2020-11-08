@@ -315,11 +315,9 @@ class EventHostedView(APIView):
 
         return Response(serializer.data)
 
-
-
 class EventAttendenceView(APIView):
     """
-    Allows orgs to mark if mentors attended
+    Allows orgs to mark if mentors attended their event
     """
     permission_classes = [IsOrganiserOrReadOnly, ]
     serializer_class = AttendanceSerializer
@@ -331,17 +329,23 @@ class EventAttendenceView(APIView):
             raise Http404
 
     def get(self, request, pk):
-        event=self.get.object(pk=pk)
+        event=self.get_object(pk=pk)
         registrations = Register.objects.filter(event=event)
         serializer = AttendanceSerializer(registrations, many=True)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        event=self.get.object(pk=pk)
+        event=self.get_object(pk=pk)
         registrations = Register.objects.filter(event=event)
-        serializer = AttendanceSerializer(registrations, many=True)
-        serializer = EventDetailSerializer(instance=event)
+        data=request.data
+        serializer = AttendanceSerializer(
+            instance=registrations,
+            data=data,
+            many=True
+            )
+        
         if serializer.is_valid():
+            data = request.data()
             serializer.save()
             return Response(
                 serializer.data,
