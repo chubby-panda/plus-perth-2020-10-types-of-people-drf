@@ -24,6 +24,7 @@ class EventSerializer(serializers.Serializer):
     event_datetime_start = serializers.DateTimeField()
     event_datetime_end = serializers.DateTimeField()
 
+    
     event_location = serializers.CharField(max_length=300)
     latitude = serializers.DecimalField(max_digits=15, decimal_places=10)
     longitude = serializers.DecimalField(max_digits=15, decimal_places=10)

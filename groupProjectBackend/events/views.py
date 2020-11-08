@@ -312,6 +312,7 @@ class EventHostedView(APIView):
         organiser = CustomUser.objects.get(username=username)
         hosted = Event.objects.all().filter(organiser=organiser)
         serializer = EventSerializer(hosted, many=True)
+
         return Response(serializer.data)
 
 
@@ -350,4 +351,5 @@ class EventAttendenceView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
 
