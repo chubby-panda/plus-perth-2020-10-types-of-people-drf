@@ -20,7 +20,9 @@ class Event(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, editable=False)
     event_datetime_start = models.DateTimeField()
     event_datetime_end = models.DateTimeField()
-    event_location = models.CharField(max_length=300)
+
+    event_location = models.CharField(max_length=300, default="Perth, WA, Australia")
+
     latitude = models.DecimalField(
         max_digits=15, decimal_places=10, default=-31.95351)
     longitude = models.DecimalField(
@@ -49,4 +51,5 @@ class Register(models.Model):
         related_name='mentor_response'
     )
     date_registered = models.DateTimeField(auto_now_add=True, editable=False)
+    attended = models.BooleanField(default=False)
     # approved = models.BooleanField(default=False)
