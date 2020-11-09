@@ -23,6 +23,8 @@ urlpatterns = [
          views.MentorAttendanceView.as_view()),
     path('events/<str:username>/events-hosted/',
          views.EventHostedView.as_view()),
+     # path('events/<int:pk>/responses/<str:username>/',
+     #      views.MentorsRegisterDetail.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

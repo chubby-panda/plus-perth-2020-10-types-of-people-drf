@@ -60,19 +60,6 @@ class RegisterSerializer(serializers.Serializer):
         instance.save()
         return instance
 
-class AttendanceSerializer(serializers.Serializer):
-    """added to allow orgs to mark attendance"""
-    id = serializers.ReadOnlyField()
-    event = serializers.ReadOnlyField(source='event.id')
-    mentor = serializers.ReadOnlyField(source='mentor.username')
-    attended = serializers.BooleanField()
-
-
-    def update(self, instance, validated_data):
-        instance.attended = validated_data.get('attended', instance.attended)
-        instance.save()
-        return instance
-
 
 
 class EventDetailSerializer(EventSerializer):
@@ -123,3 +110,48 @@ class EventDetailSerializer(EventSerializer):
 class MentorCategory(serializers.Serializer):
     event_id = serializers.IntegerField()
     mentor = serializers.ReadOnlyField(source='mentor.username')
+
+class MentorEventAttendanceSerializer(serializers.ModelSerializer):
+    """serializer to return each response, 
+    to easy update of all mentors attendance"""
+    id = serializers.ReadOnlyField(required=False, write_only=False)
+    event = serializers.ReadOnlyField(source='event.id')
+    mentor = serializers.ReadOnlyField(source='mentor.username')
+    attended = serializers.BooleanField()
+    # id = serializers.IntegerField(required=False, write_only=False)
+    class Meta:
+        model=Register
+
+class AttendanceSerializer(serializers.Serializer):
+    """allows orgs to mark attendance"""
+
+    user = serializers.StringRelatedField()
+    responses = MentorEventAttendanceSerializer(many=True)
+
+
+    def update(self, instance, validated_data):
+        # instance.attended = validated_data.get('attended', instance.attended)
+        # instance.save()
+        # return instance
+        attendance_data = validated_data.pop("responses")
+        remove_items = { item.id: item for item in instance.response.all()}
+        for item in response_data:
+            item_id = item.get("id", None)
+
+            if item_id is None:
+                #new item so create it
+                instance.id.create(**item)
+            elif remove_items.get(item_id, None) is not None:
+                #update item
+                instance_item = remove_items.pop(item_id)
+                Register.objects.filter(id=instance_item.id).update(**item)
+
+            for item in remove_items.values():
+                item.delete()
+
+            for field in validated_data:
+                setattr(instance, field, validated_data.get(field, getattr(instance,field)))
+            instance.save()
+
+            return instance
+
