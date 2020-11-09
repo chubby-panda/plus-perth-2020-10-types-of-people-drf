@@ -118,7 +118,7 @@ class MentorEventAttendanceSerializer(serializers.ModelSerializer):
     event = serializers.ReadOnlyField(source='event.id')
     mentor = serializers.ReadOnlyField(source='mentor.username')
     attended = serializers.BooleanField()
-    # id = serializers.IntegerField(required=False, write_only=False)
+    # id = serializers.IntegerField(required=False, write_only=False)   
     class Meta:
         model=Register
 

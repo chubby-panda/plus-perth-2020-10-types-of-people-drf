@@ -129,7 +129,7 @@ class PopularEventsList(APIView):
 
 class PopularEventsShortList(APIView):
     """
-    Returns shortlist (6) of projects from most responses to least
+Returns shortlist (6) of projects from most responses to least
     """
 
     def get(self, request):
@@ -355,5 +355,3 @@ class EventAttendenceView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-
-
