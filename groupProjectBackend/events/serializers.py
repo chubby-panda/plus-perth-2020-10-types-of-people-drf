@@ -25,11 +25,12 @@ class EventSerializer(serializers.Serializer):
     date_created = serializers.DateTimeField(read_only=True)
     event_datetime_start = serializers.DateTimeField()
     event_datetime_end = serializers.DateTimeField()
-
-    
-    event_location = serializers.CharField(max_length=300)
-    latitude = serializers.DecimalField(max_digits=15, decimal_places=10)
-    longitude = serializers.DecimalField(max_digits=15, decimal_places=10)
+    event_location = serializers.CharField(
+        max_length=300,  default="Perth, WA, Australia")
+    latitude = serializers.DecimalField(
+        max_digits=15, decimal_places=10, default=-31.95351)
+    longitude = serializers.DecimalField(
+        max_digits=15, decimal_places=10, default=115.85705)
     organiser = serializers.ReadOnlyField(source='organiser.username')
     categories = serializers.SlugRelatedField(
         many=True, slug_field="category", queryset=Category.objects.all())
@@ -63,6 +64,18 @@ class RegisterSerializer(serializers.Serializer):
         return instance
 
 
+class AttendanceSerializer(serializers.Serializer):
+    """added to allow orgs to mark attendance"""
+    id = serializers.ReadOnlyField()
+    event = serializers.ReadOnlyField(source='event.id')
+    mentor = serializers.ReadOnlyField(source='mentor.username')
+    attended = serializers.BooleanField()
+
+    def update(self, instance, validated_data):
+        instance.attended = validated_data.get('attended', instance.attended)
+        instance.save()
+        return instance
+
 
 class EventDetailSerializer(EventSerializer):
     responses = RegisterSerializer(many=True, read_only=True)
@@ -92,7 +105,7 @@ class EventDetailSerializer(EventSerializer):
         instance.event_datetime_start = validated_data.get(
             'event_datetime_start', instance.event_datetime_start)
         instance.event_datetime_end = validated_data.get(
-            'event_datetime_end', instance.event_date_start)
+            'event_datetime_end', instance.event_datetime_end)
         instance.event_location = validated_data.get(
             'event_location', instance.event_location)
         instance.latitude = validated_data.get('latitude', instance.latitude)

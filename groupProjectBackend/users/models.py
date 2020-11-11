@@ -15,6 +15,7 @@ class CustomUser(AbstractUser):
 class MentorProfile(models.Model):
     name = models.CharField(max_length=300, blank=True, null=True)
     bio = models.CharField(max_length=5000, blank=True, null=True)
+    mentor_image = models.URLField(blank=True, null=True, default = "https://cdn.pixabay.com/photo/2015/03/03/08/55/portrait-657116_960_720.jpg")
     location = models.CharField(max_length=300, default="Perth, WA, Australia")
     latitude = models.DecimalField(
         max_digits=15, decimal_places=10, default=-31.95351)
@@ -36,6 +37,7 @@ class OrgProfile(models.Model):
     company_name = models.CharField(max_length=300, blank=True, null=True)
     contact_name = models.CharField(max_length=300, blank=True, null=True)
     org_bio = models.CharField(max_length=5000, blank=True, null=True)
+    org_image = models.URLField(blank=True, null=True, default = "https://cdn.pixabay.com/photo/2015/03/03/08/55/portrait-657116_960_720.jpg")
     user = models.OneToOneField(
         CustomUser,
         on_delete=models.CASCADE,
