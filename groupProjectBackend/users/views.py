@@ -113,23 +113,22 @@ class MentorProfileDetail(APIView):
 
     def get_object(self, username):
         try:
-            mentor_profile = MentorProfile.objects.select_related(
-                'user').get(user__username=username)
-            self.check_object_permissions(self.request, mentor_profile)
-            return mentor_profile
-        except mentor_profile.DoesNotExist:
+            profile = MentorProfile.objects.get(user__username=username)
+            self.check_object_permissions(self.request, profile)
+            return profile
+        except MentorProfile.DoesNotExist:
             raise Http404
 
     def get(self, request, username):
-        mentor_profile = self.get_object(username=username)
-        serializer = MentorProfileSerializer(mentor_profile)
+        profile = self.get_object(username)
+        serializer = MentorProfileSerializer(profile)
         return Response(serializer.data)
 
     def put(self, request, username):
-        mentor_profile = self.get_object(username=username)
-        self.check_object_permissions(request, mentor_profile)
+        profile = self.get_object(username)
+        self.check_object_permissions(request, profile)
         serializer = MentorProfileSerializer(
-            instance=mentor_profile, data=request.data, partial=True)
+            instance=profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(
