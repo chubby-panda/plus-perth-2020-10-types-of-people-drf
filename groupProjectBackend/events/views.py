@@ -1,3 +1,4 @@
+from django.core.exceptions import RequestDataTooBig
 from django.shortcuts import render
 from django.db.models import Count
 from django.http import Http404
@@ -5,7 +6,7 @@ from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
-from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer, AttendanceSerializer
+from .serializers import BulkAttendanceUpdateSerializer, EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, MentorEventAttendanceSerializer, RegisterSerializer
 from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered, IsOrganiserOrReadOnly
 from users.models import CustomUser, MentorProfile
 from math import radians, cos, sin, asin, sqrt
@@ -318,40 +319,23 @@ class EventHostedView(APIView):
 class EventAttendenceView(APIView):
     """
     Allows orgs to mark if mentors attended their event
+    Allows for Bulk Update - But Permissions not working correctly.
     """
-    permission_classes = [IsOrganiserOrReadOnly, ]
-    serializer_class = AttendanceSerializer
-
-    def get_object(self, pk):
-        try:
-            return Event.objects.get(pk=pk)
-        except Event.DoesNotExist:
-            raise Http404
+    # permission_classes = [IsOrganiserOrReadOnly, ]
+    serializer = BulkAttendanceUpdateSerializer
 
     def get(self, request, pk):
-        event=self.get_object(pk=pk)
-        registrations = Register.objects.filter(event=event)
-        serializer = AttendanceSerializer(registrations, many=True)
+
+        serializer = self.serializer(instance=Event.objects.get(pk=pk))
         return Response(serializer.data)
 
+
     def put(self, request, pk):
-        event=self.get_object(pk=pk)
-        registrations = Register.objects.filter(event=event)
-        data=request.data
-        serializer = AttendanceSerializer(
-            instance=registrations,
-            data=data,
-            many=True
-            )
-        
-        if serializer.is_valid():
-            data = request.data()
-            serializer.save()
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        event = Event.objects.get(pk=pk)
+        print(request.data)
+        list_of_mentors = request.data.get('responses',[])
+        for mentor in list_of_mentors:
+            Register.objects.filter(event=event, mentor_id=mentor['mentor']).update(attended=True)
+            
+        serializer = self.serializer(instance=event)
+        return Response(serializer.data)
