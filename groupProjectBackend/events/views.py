@@ -5,8 +5,8 @@ from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
-from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer
-from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered
+from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer, AttendanceSerializer
+from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered, IsOrganiserOrReadOnly
 from users.models import CustomUser, MentorProfile
 from math import radians, cos, sin, asin, sqrt
 from django.db.models import F, Func
@@ -163,7 +163,7 @@ class LocationEventsList(APIView):
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
-
+        
 class CategoryProjectList(APIView):
     """
     Returns list of projects of specified category
@@ -268,8 +268,9 @@ class MentorsRegisterList(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+   
     def delete(self, request, pk):
-        event_registrations = Register.objects.all().filter(event=self.get_object(pk))
+        event_registrations = Register.objects.all().filter(event=self.get_object(pk))   
         user_registration = event_registrations.filter(mentor=request.user)
         if len(user_registration) > 0:
             user_registration.delete()
@@ -284,11 +285,13 @@ class MentorsRegisterList(APIView):
 
 class MentorsRegisterDetailView(APIView):
     permission_classes = [IsOwnerOrReadOnly]
-    serializer_class = RegisterSerializer
+    serializer_class = RegisterSerializer 
+
 
 
 class MentorAttendanceView(APIView):
-
+    """The attended variable here just refers to whether or not they expressed interest, 
+    not whether they actually attended the event."""
     def get_object(self, username):
         try:
             return CustomUser.objects.get(username=username)
@@ -302,10 +305,51 @@ class MentorAttendanceView(APIView):
         return Response(serializer.data)
 
 
+
 class EventHostedView(APIView):
 
     def get(self, request, username):
         organiser = CustomUser.objects.get(username=username)
         hosted = Event.objects.all().filter(organiser=organiser)
         serializer = EventSerializer(hosted, many=True)
+
         return Response(serializer.data)
+
+
+
+class EventAttendenceView(APIView):
+    """
+    Allows orgs to mark if mentors attended
+    """
+    permission_classes = [IsOrganiserOrReadOnly, ]
+    serializer_class = AttendanceSerializer
+
+    def get_object(self, pk):
+        try:
+            return Event.objects.get(pk=pk)
+        except Event.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        event=self.get.object(pk=pk)
+        registrations = Register.objects.filter(event=event)
+        serializer = AttendanceSerializer(registrations, many=True)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        event=self.get.object(pk=pk)
+        registrations = Register.objects.filter(event=event)
+        serializer = AttendanceSerializer(registrations, many=True)
+        serializer = EventDetailSerializer(instance=event)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+

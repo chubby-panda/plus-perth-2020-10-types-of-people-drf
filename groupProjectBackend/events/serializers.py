@@ -1,3 +1,4 @@
+from django.db.models.fields import DateTimeField
 from rest_framework import serializers
 from .models import Event, Category, Register
 
@@ -20,9 +21,10 @@ class EventSerializer(serializers.Serializer):
     event_image = serializers.URLField(max_length=120)
     is_open = serializers.BooleanField(default=True)
     date_created = serializers.DateTimeField(read_only=True)
-    event_date = serializers.DateTimeField()
-    event_start = serializers.TimeField(format='%H:%M')
-    event_end = serializers.TimeField(format='%H:%M')
+    event_datetime_start = serializers.DateTimeField()
+    event_datetime_end = serializers.DateTimeField()
+
+    
     event_location = serializers.CharField(max_length=300)
     latitude = serializers.DecimalField(max_digits=15, decimal_places=10)
     longitude = serializers.DecimalField(max_digits=15, decimal_places=10)
@@ -58,6 +60,20 @@ class RegisterSerializer(serializers.Serializer):
         instance.save()
         return instance
 
+class AttendanceSerializer(serializers.Serializer):
+    """added to allow orgs to mark attendance"""
+    id = serializers.ReadOnlyField()
+    event = serializers.ReadOnlyField(source='event.id')
+    mentor = serializers.ReadOnlyField(source='mentor.username')
+    attended = serializers.BooleanField()
+
+
+    def update(self, instance, validated_data):
+        instance.attended = validated_data.get('attended', instance.attended)
+        instance.save()
+        return instance
+
+
 
 class EventDetailSerializer(EventSerializer):
     responses = RegisterSerializer(many=True, read_only=True)
@@ -84,12 +100,10 @@ class EventDetailSerializer(EventSerializer):
             'date_created', instance.date_created)
         instance.organiser = validated_data.get(
             'organiser', instance.organiser)
-        instance.event_date = validated_data.get(
-            'event_date', instance.event_date)
-        instance.event_start = validated_data.get(
-            'event_start', instance.event_start)
-        instance.event_end = validated_data.get(
-            'event_end', instance.event_end)
+        instance.event_datetime_start = validated_data.get(
+            'event_datetime_start', instance.event_datetime_start)
+        instance.event_datetime_end = validated_data.get(
+            'event_datetime_end', instance.event_date_start)
         instance.event_location = validated_data.get(
             'event_location', instance.event_location)
         instance.latitude = validated_data.get('latitude', instance.latitude)
