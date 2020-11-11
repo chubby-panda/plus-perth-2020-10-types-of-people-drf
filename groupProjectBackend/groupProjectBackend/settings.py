@@ -27,8 +27,8 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
+# DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
@@ -66,8 +66,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
-AUTH_USER_MODEL = 'users.CustomUser'
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
@@ -76,6 +74,8 @@ REST_FRAMEWORK = {
     ],
     # 'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
+
+AUTH_USER_MODEL = 'users.CustomUser'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
