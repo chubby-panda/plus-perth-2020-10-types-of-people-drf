@@ -1,4 +1,6 @@
+from users.models import MentorProfile
 from django.db.models.fields import DateTimeField
+from django.db.models.query import QuerySet
 from rest_framework import serializers
 from .models import Event, Category, Register
 
@@ -123,3 +125,29 @@ class EventDetailSerializer(EventSerializer):
 class MentorCategory(serializers.Serializer):
     event_id = serializers.IntegerField()
     mentor = serializers.ReadOnlyField(source='mentor.username')
+
+class MentorEventAttendanceSerializer(serializers.Serializer):
+    """serializer to return mentors who responded to one event"""
+    id = serializers.ReadOnlyField()
+    event = serializers.ReadOnlyField(source='event.id')
+    mentor = serializers.ReadOnlyField(source='mentor.username')
+    attended = serializers.BooleanField(source='register.pk')
+
+
+class RegisterMentorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Register
+        fields = ['mentor', 'attended']
+
+class BulkAttendanceUpdateSerializer(serializers.ModelSerializer):
+    """
+    This allows for bulk update of mentors who attended the event
+
+    """    
+    responses = RegisterMentorSerializer(many=True)
+
+    class Meta:
+        model = Event
+        fields = ['responses']
+
+
