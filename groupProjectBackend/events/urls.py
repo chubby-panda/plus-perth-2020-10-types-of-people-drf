@@ -4,12 +4,13 @@ from . import views
 
 urlpatterns = [
     path('events/', views.EventList.as_view()),
+    path('events/search/', views.EventSearchView.as_view()),
     path('events/most-popular/', views.PopularEventsList.as_view()),
     path('events/most-popular/short-list/',
          views.PopularEventsShortList.as_view()),
     path('events/location/<int:kms>/', views.LocationEventsList.as_view()),
     path('events/<int:pk>/responses/', views.MentorAttendanceView.as_view()),
-    #adding new url to allow org to mark attendane
+    # adding new url to allow org to mark attendane
 
     path('events/<int:pk>/', views.EventDetail.as_view()),
     path('events/<int:pk>/attendance/', views.EventAttendenceView.as_view()),
@@ -23,9 +24,9 @@ urlpatterns = [
          views.MentorAttendanceView.as_view()),
     path('events/<str:username>/events-hosted/',
          views.EventHostedView.as_view()),
-     #may need debugging?
-     path('events/<int:pk>/responses/<str:username>/',
-          views.MentorsRegisterDetailView.as_view()),
+    # may need debugging?
+    path('events/<int:pk>/responses/<str:username>/',
+         views.MentorsRegisterDetailView.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

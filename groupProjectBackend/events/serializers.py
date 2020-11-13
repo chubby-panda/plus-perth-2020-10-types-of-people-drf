@@ -126,6 +126,7 @@ class MentorCategory(serializers.Serializer):
     event_id = serializers.IntegerField()
     mentor = serializers.ReadOnlyField(source='mentor.username')
 
+
 class MentorEventAttendanceSerializer(serializers.Serializer):
     """serializer to return mentors who responded to one event"""
     id = serializers.ReadOnlyField()
@@ -139,15 +140,14 @@ class RegisterMentorSerializer(serializers.ModelSerializer):
         model = Register
         fields = ['mentor', 'attended']
 
+
 class BulkAttendanceUpdateSerializer(serializers.ModelSerializer):
     """
     This allows for bulk update of mentors who attended the event
 
-    """    
+    """
     responses = RegisterMentorSerializer(many=True)
 
     class Meta:
         model = Event
         fields = ['responses']
-
-
