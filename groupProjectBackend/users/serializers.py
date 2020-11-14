@@ -6,6 +6,7 @@ from events.models import Category
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(max_length=100, write_only=True, required=True)
 
     class Meta:
         model = CustomUser
