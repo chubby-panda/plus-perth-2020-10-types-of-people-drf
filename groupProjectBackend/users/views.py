@@ -136,7 +136,7 @@ class MentorProfileDetail(APIView):
                 status.HTTP_200_OK
             )
         return Response(
-            serializer.data,
+            serializer.errors,
             status.HTTP_400_BAD_REQUEST
         )
 
@@ -170,6 +170,6 @@ class OrgProfileDetail(APIView):
                 status.HTTP_200_OK
             )
         return Response(
-            serializer.data,
+            serializer.errors,
             status.HTTP_400_BAD_REQUEST
         )
