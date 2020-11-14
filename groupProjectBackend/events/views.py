@@ -1,14 +1,16 @@
+from django.core.exceptions import RequestDataTooBig
 from django.shortcuts import render
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import Http404
-from rest_framework import status, permissions, generics
+from rest_framework import status, permissions, generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
-from .serializers import EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, RegisterSerializer, AttendanceSerializer
+from .serializers import BulkAttendanceUpdateSerializer, EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, MentorEventAttendanceSerializer, RegisterSerializer
 from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered, IsOrganiserOrReadOnly
 from users.models import CustomUser, MentorProfile
 from math import radians, cos, sin, asin, sqrt
+from itertools import chain
 from django.db.models import F, Func
 from django.db.models.functions import Sin, Cos, Sqrt, ASin, Radians, ATan2
 
@@ -96,7 +98,7 @@ class EventList(APIView):
     permission_classes = [IsOrganisationOrReadOnly]
 
     def get(self, request):
-        events = Event.objects.filter(is_open=True)
+        events = Event.objects.filter(is_open=True)[:30]
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
@@ -115,6 +117,19 @@ class EventList(APIView):
         )
 
 
+class EventSearchView(generics.ListAPIView):
+    """
+    Filters all events using search parameters
+    """
+    serializer_class = EventSerializer
+
+    def get_queryset(self):
+        query = self.request.query_params['query']
+        queryset = Event.objects.filter(Q(event_name__icontains=query) | Q(event_description__icontains=query) | Q(event_location__icontains=query) | Q(
+            categories__category__icontains=query) | Q(organiser__username__icontains=query) | Q(organiser__org_profile__company_name__icontains=query)).order_by('-date_created')[:30]
+        return queryset
+
+
 class PopularEventsList(APIView):
     """
     Returns list of projects from most responses to least
@@ -122,14 +137,14 @@ class PopularEventsList(APIView):
 
     def get(self, request):
         events = Event.objects.annotate(num_responses=Count(
-            'responses')).order_by('-num_responses')
+            'responses')).order_by('-num_responses')[:30]
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
 
 class PopularEventsShortList(APIView):
     """
-    Returns shortlist (6) of projects from most responses to least
+Returns shortlist (6) of projects from most responses to least
     """
 
     def get(self, request):
@@ -156,21 +171,21 @@ class LocationEventsList(APIView):
         events = Event.objects.annotate(distance=(
             radius * (2 * ATan2(Sqrt(Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2),
                                 Sqrt(1 - (Sin((Radians(F('latitude')) - Radians(latitude))/2) ** 2 + Cos(Radians(latitude)) * Cos(Radians(F('latitude'))) * Sin((Radians(F('longitude')) - Radians(longitude))/2)**2))))
-        )).filter(distance__lte=kms).order_by('distance')
+        )).filter(distance__lte=kms).order_by('distance')[:30]
 
         for event in events:
             print("EVENT DISTANCE", event.distance)
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
-        
+
 class CategoryProjectList(APIView):
     """
     Returns list of projects of specified category
     """
 
     def get(self, request, category):
-        events = Event.objects.filter(categories__category=category)
+        events = Event.objects.filter(categories__category=category)[:30]
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
@@ -268,9 +283,8 @@ class MentorsRegisterList(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-   
     def delete(self, request, pk):
-        event_registrations = Register.objects.all().filter(event=self.get_object(pk))   
+        event_registrations = Register.objects.all().filter(event=self.get_object(pk))
         user_registration = event_registrations.filter(mentor=request.user)
         if len(user_registration) > 0:
             user_registration.delete()
@@ -285,13 +299,16 @@ class MentorsRegisterList(APIView):
 
 class MentorsRegisterDetailView(APIView):
     permission_classes = [IsOwnerOrReadOnly]
-    serializer_class = RegisterSerializer 
-
+    serializer_class = RegisterSerializer
 
 
 class MentorAttendanceView(APIView):
-    """The attended variable here just refers to whether or not they expressed interest, 
-    not whether they actually attended the event."""
+    """
+    Returns a list of all mentors who have expressed interest in an event.
+    The attended variable here just refers to whether or not they expressed interest, 
+    not whether they actually attended the event.
+    """
+
     def get_object(self, username):
         try:
             return CustomUser.objects.get(username=username)
@@ -305,8 +322,10 @@ class MentorAttendanceView(APIView):
         return Response(serializer.data)
 
 
-
 class EventHostedView(APIView):
+    """
+    This returns a list of all events (open and closed) by an organiser
+    """
 
     def get(self, request, username):
         organiser = CustomUser.objects.get(username=username)
@@ -316,40 +335,27 @@ class EventHostedView(APIView):
         return Response(serializer.data)
 
 
-
 class EventAttendenceView(APIView):
     """
-    Allows orgs to mark if mentors attended
+    Returns a view of all mentors registered for an event.
+    Allows orgs to mark if mentors attended their event
+    Allows for Bulk Update - But Permissions not working correctly.
     """
-    permission_classes = [IsOrganiserOrReadOnly, ]
-    serializer_class = AttendanceSerializer
-
-    def get_object(self, pk):
-        try:
-            return Event.objects.get(pk=pk)
-        except Event.DoesNotExist:
-            raise Http404
+    # permission_classes = [IsOrganiserOrReadOnly, ]
+    serializer = BulkAttendanceUpdateSerializer
 
     def get(self, request, pk):
-        event=self.get.object(pk=pk)
-        registrations = Register.objects.filter(event=event)
-        serializer = AttendanceSerializer(registrations, many=True)
+
+        serializer = self.serializer(instance=Event.objects.get(pk=pk))
         return Response(serializer.data)
 
     def put(self, request, pk):
-        event=self.get.object(pk=pk)
-        registrations = Register.objects.filter(event=event)
-        serializer = AttendanceSerializer(registrations, many=True)
-        serializer = EventDetailSerializer(instance=event)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        event = Event.objects.get(pk=pk)
+        print(request.data)
+        list_of_mentors = request.data.get('responses', [])
+        for mentor in list_of_mentors:
+            Register.objects.filter(
+                event=event, mentor_id=mentor['mentor']).update(attended=True)
 
-
+        serializer = self.serializer(instance=event)
+        return Response(serializer.data)
