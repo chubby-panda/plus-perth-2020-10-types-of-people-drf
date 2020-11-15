@@ -136,6 +136,7 @@ class MentorEventAttendanceSerializer(serializers.Serializer):
 
 
 class RegisterMentorSerializer(serializers.ModelSerializer):
+    mentor = serializers.ReadOnlyField(source='mentor.username')
     class Meta:
         model = Register
         fields = ['mentor', 'attended']
