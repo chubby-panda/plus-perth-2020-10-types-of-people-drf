@@ -50,4 +50,3 @@ class Register(models.Model):
     )
     date_registered = models.DateTimeField(auto_now_add=True, editable=False)
     attended = models.BooleanField(default=False)
-    # approved = models.BooleanField(default=False)
