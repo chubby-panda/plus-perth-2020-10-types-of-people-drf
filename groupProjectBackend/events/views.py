@@ -126,7 +126,7 @@ class EventSearchView(generics.ListAPIView):
     def get_queryset(self):
         query = self.request.query_params['query']
         queryset = Event.objects.filter(Q(event_name__icontains=query) | Q(event_description__icontains=query) | Q(event_location__icontains=query) | Q(
-            categories__category__icontains=query) | Q(organiser__username__icontains=query) | Q(organiser__org_profile__company_name__icontains=query)).order_by('-date_created')[:30]
+            categories__category__icontains=query) | Q(organiser__username__icontains=query) | Q(organiser__org_profile__company_name__icontains=query)).order_by('-date_created').distinct()[:30]
         return queryset
 
 
