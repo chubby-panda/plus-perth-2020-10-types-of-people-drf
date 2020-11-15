@@ -255,7 +255,7 @@ class MentorsRegisterList(APIView):
     Returns a list of mentors for specified event
     Posts a mentor register object
     """
-    permission_classes = [HasNotRegistered, ]
+    # permission_classes = [HasNotRegistered, ]
 
     def get_object(self, pk):
         try:
@@ -345,17 +345,16 @@ class EventAttendenceView(APIView):
     serializer = BulkAttendanceUpdateSerializer
 
     def get(self, request, pk):
-
         serializer = self.serializer(instance=Event.objects.get(pk=pk))
         return Response(serializer.data)
 
     def put(self, request, pk):
         event = Event.objects.get(pk=pk)
-        print(request.data)
         list_of_mentors = request.data.get('responses', [])
+
         for mentor in list_of_mentors:
             Register.objects.filter(
-                event=event, mentor_id=mentor['mentor']).update(attended=True)
+                event=event, mentor_id=mentor['mentor']).update(attended=mentor['attended'])
 
         serializer = self.serializer(instance=event)
         return Response(serializer.data)
