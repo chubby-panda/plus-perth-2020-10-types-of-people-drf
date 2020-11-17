@@ -6,7 +6,7 @@ from rest_framework import status, permissions, generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Event, Category, Register
-from .serializers import BulkAttendanceUpdateSerializer, EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, MentorEventAttendanceSerializer, RegisterSerializer
+from .serializers import BulkAttendanceUpdateSerializer, EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, MentorEventAttendanceSerializer, RegisterSerializer, MentorCategory
 from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered, IsOrganiserOrReadOnly
 from users.models import CustomUser, MentorProfile
 from math import radians, cos, sin, asin, sqrt
