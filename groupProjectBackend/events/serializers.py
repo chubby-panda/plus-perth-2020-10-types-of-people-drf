@@ -139,7 +139,7 @@ class RegisterMentorSerializer(serializers.ModelSerializer):
     mentor = serializers.ReadOnlyField(source='mentor.username')
     class Meta:
         model = Register
-        fields = ['mentor', 'attended']
+        fields = ['id', 'mentor', 'attended']
 
 
 class BulkAttendanceUpdateSerializer(serializers.ModelSerializer):

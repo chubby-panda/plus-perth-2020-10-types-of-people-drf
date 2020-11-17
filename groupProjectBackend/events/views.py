@@ -350,11 +350,11 @@ class EventAttendenceView(APIView):
 
     def put(self, request, pk):
         event = Event.objects.get(pk=pk)
+        serializer = self.serializer(instance=event)
         list_of_mentors = request.data.get('responses', [])
 
         for mentor in list_of_mentors:
-            Register.objects.filter(
-                event=event, mentor_id=mentor['mentor']).update(attended=mentor['attended'])
+            mentorSerialized = [data for data in serializer.data['responses'] if data["mentor"] == mentor["mentor"]][0]
+            mentorSerialized['attended'] = mentor['attended']
 
-        serializer = self.serializer(instance=event)
         return Response(serializer.data)
