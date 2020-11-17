@@ -255,7 +255,7 @@ class MentorsRegisterList(APIView):
     Returns a list of mentors for specified event
     Posts a mentor register object
     """
-    # permission_classes = [HasNotRegistered, ]
+    permission_classes = [HasNotRegistered, ]
 
     def get_object(self, pk):
         try:
