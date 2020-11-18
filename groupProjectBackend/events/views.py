@@ -351,10 +351,8 @@ class EventAttendenceView(APIView):
     def put(self, request, pk):
         event = Event.objects.get(pk=pk)
         serializer = self.serializer(instance=event)
-        list_of_mentors = request.data.get('responses', [])
-
-        for mentor in list_of_mentors:
-            mentorSerialized = [data for data in serializer.data['responses'] if data["mentor"] == mentor["mentor"]][0]
-            mentorSerialized['attended'] = mentor['attended']
-
+        for thing in event.responses.all():
+            userPayload = [mentor for mentor in request.data["responses"] if mentor["mentor"] == str(thing.mentor)]
+            thing.attended = userPayload[0]["attended"]
+            thing.save()
         return Response(serializer.data)
