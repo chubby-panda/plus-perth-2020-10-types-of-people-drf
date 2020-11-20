@@ -2,7 +2,7 @@ from users.models import MentorProfile
 from django.db.models.fields import DateTimeField
 from django.db.models.query import QuerySet
 from rest_framework import serializers
-from .models import Event, Category, Register
+from .models import Event, Category, Register, EventImage
 
 
 class CategorySerializer(serializers.Serializer):
@@ -41,6 +41,23 @@ class EventSerializer(serializers.Serializer):
         event.categories.set(categories)
         event.save()
         return event
+
+
+class EventImageSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+    event = serializers.ReadOnlyField(source="event.id")
+
+    class Meta:
+        model = EventImage
+        fields = ['id', 'event', 'image']
+
+    def create(self, validated_data):
+        return EventImage.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.image = validated_data.get('image', instance.image)
+        instance.save()
+        return instance
 
 
 class CategoryProjectSerializer(CategorySerializer):
@@ -137,6 +154,7 @@ class MentorEventAttendanceSerializer(serializers.Serializer):
 
 class RegisterMentorSerializer(serializers.ModelSerializer):
     mentor = serializers.ReadOnlyField(source='mentor.username')
+
     class Meta:
         model = Register
         fields = ['mentor', 'attended']
