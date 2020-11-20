@@ -14,6 +14,9 @@ urlpatterns = [
     # adding new url to allow org to mark attendane
 
     path('events/<int:pk>/', views.EventDetail.as_view()),
+    path('events/<int:pk>/images/', views.EventImageList.as_view()),
+    path('events/<int:event_pk>/images/<int:image_pk>/',
+         views.EventImageDetail.as_view()),
     path('events/<int:pk>/attendance/', views.EventAttendenceView.as_view()),
     path('events/categories/', views.CategoryList.as_view()),
     path('events/categories/<str:category>/', views.CategoryDetail.as_view()),

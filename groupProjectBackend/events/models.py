@@ -1,3 +1,5 @@
+import uuid
+import os
 from django.db import models
 from django.contrib.auth import get_user_model
 
@@ -20,7 +22,8 @@ class Event(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, editable=False)
     event_datetime_start = models.DateTimeField()
     event_datetime_end = models.DateTimeField()
-    event_location = models.CharField(max_length=300, default="Perth, WA, Australia")
+    event_location = models.CharField(
+        max_length=300, default="Perth, WA, Australia")
     latitude = models.DecimalField(
         max_digits=15, decimal_places=10, default=-31.95351)
     longitude = models.DecimalField(
@@ -35,6 +38,30 @@ class Event(models.Model):
         related_name='events',
         related_query_name='event'
     )
+
+
+class EventImage(models.Model):
+    """
+    Model for uploading images for events
+    """
+
+    def upload_image_to(instance, filename):
+        print(filename)
+        filename_base, filename_ext = os.path.splitext(filename)
+        print(os.path.splitext(filename))
+        u = uuid.uuid4()
+        return 'events/%s/%s' % (
+            now().strftime("%Y%m%d"),
+            u.hex
+        )
+
+    event = models.ForeignKey(
+        'Event',
+        on_delete=models.CASCADE,
+        related_name='event_images'
+    )
+    image = models.ImageField(
+        upload_to=upload_image_to, editable=True, null=True, blank=True)
 
 
 class Register(models.Model):

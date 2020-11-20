@@ -4,9 +4,10 @@ from django.db.models import Count, Q
 from django.http import Http404
 from rest_framework import status, permissions, generics, filters
 from rest_framework.views import APIView
+from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
-from .models import Event, Category, Register
-from .serializers import BulkAttendanceUpdateSerializer, EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, MentorEventAttendanceSerializer, RegisterSerializer, MentorCategory
+from .models import Event, Category, Register, EventImage
+from .serializers import BulkAttendanceUpdateSerializer, EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, MentorEventAttendanceSerializer, RegisterSerializer, MentorCategory, EventImageSerializer
 from .permissions import IsOwnerOrReadOnly, IsSuperUser, IsOrganisationOrReadOnly, HasNotRegistered, IsOrganiserOrReadOnly
 from users.models import CustomUser, MentorProfile
 from math import radians, cos, sin, asin, sqrt
@@ -248,6 +249,82 @@ class EventDetail(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Event.DoesNotExist:
             raise Http404
+
+
+class EventImageList(APIView):
+    """
+    A view for uploading and retrieving event images
+    """
+    queryset = EventImage.objects.all()
+    serializer_class = EventImageSerializer
+    parser_classes = (FileUploadParser,)
+
+    def get_object(self, pk):
+        try:
+            event = Event.objects.get(pk=pk)
+            self.check_object_permissions(self.request, event)
+            return event
+        except Event.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        images = EventImage.objects.all().filter(event=self.get_object(pk))
+        serializer = EventImageSerializer(images, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, pk):
+        serializer = EventImageSerializer(data={'image': request.data['file']})
+        if serializer.is_valid():
+            serializer.save(event=self.get_object(pk))
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class EventImageDetail(APIView):
+    """
+    A view for updating, deleting and retrieving a single event image
+    """
+    parser_classes = (FileUploadParser,)
+    serializer_class = EventImageSerializer
+
+    def get_object(self, image_pk):
+        try:
+            image = EventImage.objects.get(pk=image_pk)
+            self.check_object_permissions(self.request, image)
+            return image
+        except EventImage.DoesNotExist:
+            raise Http404
+
+    def get(self, request, event_pk, image_pk):
+        image = self.get_object(image_pk)
+        serializer = EventImageSerializer(image)
+        return Response(serializer.data)
+
+    def put(self, request, event_pk, image_pk):
+        image = self.get_object(image_pk)
+        serializer = EventImageSerializer(
+            image, data={'image': request.data['file']})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def delete(self, request, event_pk, image_pk):
+        image = self.get_object(image_pk)
+        image.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class MentorsRegisterList(APIView):
