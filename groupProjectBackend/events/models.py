@@ -2,6 +2,7 @@ import uuid
 import os
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils.timezone import now
 
 
 class Category(models.Model):

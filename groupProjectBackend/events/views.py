@@ -4,7 +4,7 @@ from django.db.models import Count, Q
 from django.http import Http404
 from rest_framework import status, permissions, generics, filters
 from rest_framework.views import APIView
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework.response import Response
 from .models import Event, Category, Register, EventImage
 from .serializers import BulkAttendanceUpdateSerializer, EventSerializer, EventDetailSerializer, CategoryProjectSerializer, CategorySerializer, MentorEventAttendanceSerializer, RegisterSerializer, MentorCategory, EventImageSerializer
@@ -257,7 +257,7 @@ class EventImageList(APIView):
     """
     queryset = EventImage.objects.all()
     serializer_class = EventImageSerializer
-    parser_classes = (FileUploadParser,)
+    parser_classes = (FileUploadParser, )
 
     def get_object(self, pk):
         try:
@@ -273,6 +273,7 @@ class EventImageList(APIView):
         return Response(serializer.data)
 
     def post(self, request, pk):
+        print("REQUEST DATA:", request.data)
         serializer = EventImageSerializer(data={'image': request.data['file']})
         if serializer.is_valid():
             serializer.save(event=self.get_object(pk))
