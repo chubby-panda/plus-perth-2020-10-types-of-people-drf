@@ -49,9 +49,10 @@ class EventImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EventImage
-        fields = ['id', 'event', 'image']
+        fields = ['id', 'event', 'image', ]
 
     def create(self, validated_data):
+        print("Validated Data", validated_data)
         return EventImage.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
